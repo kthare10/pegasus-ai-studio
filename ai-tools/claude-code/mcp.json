@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "pegasus-docs": {
+      "type": "url",
+      "url": "https://gitmcp.io/pegasus-isi/pegasus"
+    },
+    "kiso-docs": {
+      "type": "url",
+      "url": "https://gitmcp.io/pegasus-isi/kiso"
+    }
+  }
+}

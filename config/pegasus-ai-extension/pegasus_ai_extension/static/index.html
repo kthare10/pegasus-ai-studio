@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PegasusAI — Pegasus AI Workbench</title>
+<style>
+/* ── CSS Variables (Scientific Blue theme) ──────────────────────── */
+:root {
+  --pai-bg: #f8f9fa;
+  --pai-sidebar-bg: #ffffff;
+  --pai-text: #1a1a2e;
+  --pai-text-muted: #6b7280;
+  --pai-border: #e5e7eb;
+  --pai-primary: #1565c0;
+  --pai-primary-dark: #0d47a1;
+  --pai-primary-light: #42a5f5;
+  --pai-primary-bg: rgba(21, 101, 192, 0.08);
+  --pai-success: #10b981;
+  --pai-error: #ef4444;
+  --pai-warning: #f59e0b;
+  --pai-tint: #f3f4f6;
+  --pai-input-bg: #ffffff;
+  --pai-card-bg: #ffffff;
+  --pai-code-bg: #f1f5f9;
+  --pai-user-bubble: #e3f2fd;
+  --pai-tool-bg: #f0fdf4;
+  --pai-tool-border: #bbf7d0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pai-bg: #0f172a;
+    --pai-sidebar-bg: #0b1120;
+    --pai-text: #e2e8f0;
+    --pai-text-muted: #94a3b8;
+    --pai-border: rgba(255,255,255,0.08);
+    --pai-primary: #42a5f5;
+    --pai-primary-dark: #1565c0;
+    --pai-primary-light: #90caf9;
+    --pai-primary-bg: rgba(66, 165, 245, 0.12);
+    --pai-success: #34d399;
+    --pai-error: #f87171;
+    --pai-warning: #fbbf24;
+    --pai-tint: rgba(255,255,255,0.04);
+    --pai-input-bg: #1e293b;
+    --pai-card-bg: #1e293b;
+    --pai-code-bg: #1e293b;
+    --pai-user-bubble: rgba(66, 165, 245, 0.15);
+    --pai-tool-bg: rgba(52, 211, 153, 0.08);
+    --pai-tool-border: rgba(52, 211, 153, 0.25);
+  }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--pai-bg);
+  color: var(--pai-text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  background: var(--pai-sidebar-bg);
+  border-right: 1px solid var(--pai-border);
+  transition: width 0.2s, min-width 0.2s, opacity 0.2s;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--pai-border);
+}
+
+.sidebar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  color: white;
+}
+
+.sidebar-title {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--pai-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.sidebar-toggle:hover { background: var(--pai-tint); }
+.sidebar-toggle svg { width: 18px; height: 18px; }
+
+/* ── Sidebar content ──────────────────────────────────────── */
+
+.sidebar-section {
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-branding { margin-bottom: 12px; }
+
+.sidebar-tagline {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.sidebar-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--pai-primary-bg);
+  color: var(--pai-primary);
+}
+
+.sidebar-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--pai-text-muted);
+  margin-bottom: 16px;
+}
+
+.sidebar-desc strong {
+  color: var(--pai-text);
+  font-weight: 600;
+}
+
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--pai-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pai-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 16px;
+}
+
+.new-chat-btn svg { width: 16px; height: 16px; }
+.new-chat-btn:hover { background: var(--pai-tint); }
+
+/* ── Config pickers ────────────────────────────────────────── */
+
+.config-picker {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--pai-tint);
+  border-radius: 8px;
+}
+
+.config-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pai-text-muted);
+  margin-bottom: 6px;
+}
+
+.config-select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: 1px solid var(--pai-border);
+  border-radius: 6px;
+  background: var(--pai-input-bg);
+  color: var(--pai-text);
+  cursor: pointer;
+}
+
+.config-select:focus {
+  outline: none;
+  border-color: var(--pai-primary);
+}
+
+.config-hint {
+  font-size: 10px;
+  color: var(--pai-text-muted);
+  margin-top: 4px;
+}
+
+.config-loading {
+  font-size: 11px;
+  color: var(--pai-text-muted);
+  font-style: italic;
+}
+
+.provider-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pai-primary);
+  margin-bottom: 6px;
+}
+
+/* ── Tips ───────────────────────────────────────────────────── */
+
+.sidebar-tips {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--pai-tint);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--pai-text-muted);
+}
+
+.sidebar-tips strong {
+  color: var(--pai-text);
+  font-weight: 600;
+}
+
+.sidebar-tips code {
+  background: var(--pai-code-bg);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── Main area ──────────────────────────────────────────────── */
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--pai-border);
+  flex-shrink: 0;
+}
+
+.sidebar-open-btn {
+  background: none;
+  border: 1px solid var(--pai-border);
+  color: var(--pai-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.sidebar-open-btn:hover {
+  background: var(--pai-tint);
+  border-color: var(--pai-primary);
+}
+
+.sidebar-open-btn svg { width: 18px; height: 18px; }
+
+.header-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.header-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--pai-primary-bg);
+  color: var(--pai-primary);
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.header-btn {
+  background: none;
+  border: 1px solid var(--pai-border);
+  color: var(--pai-text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.header-btn:hover {
+  background: var(--pai-tint);
+  color: var(--pai-primary);
+  border-color: var(--pai-primary);
+}
+
+.header-btn svg { width: 14px; height: 14px; }
+
+/* ── Messages area ─────────────────────────────────────────── */
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  scroll-behavior: smooth;
+}
+
+.welcome-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--pai-text-muted);
+}
+
+.welcome-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.welcome-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--pai-text);
+  margin-bottom: 8px;
+}
+
+.welcome-sub {
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.message {
+  margin-bottom: 16px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.message-user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message-user .bubble {
+  background: var(--pai-user-bubble);
+  border-radius: 16px 16px 4px 16px;
+  padding: 10px 14px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-assistant {
+  display: flex;
+  gap: 10px;
+}
+
+.assistant-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.assistant-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.assistant-content .bubble {
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* ── Markdown rendering ────────────────────────────────────── */
+
+.bubble p { margin: 0 0 8px; }
+.bubble p:last-child { margin-bottom: 0; }
+
+.bubble pre {
+  background: var(--pai-code-bg);
+  border: 1px solid var(--pai-border);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.bubble code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+.bubble :not(pre) > code {
+  background: var(--pai-code-bg);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.bubble ul, .bubble ol {
+  margin: 4px 0 8px 20px;
+}
+
+.bubble li { margin-bottom: 4px; }
+
+.bubble a {
+  color: var(--pai-primary);
+  text-decoration: none;
+}
+
+.bubble a:hover { text-decoration: underline; }
+
+.bubble strong { font-weight: 600; }
+
+.bubble table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+  width: 100%;
+}
+
+.bubble th, .bubble td {
+  border: 1px solid var(--pai-border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.bubble th {
+  background: var(--pai-tint);
+  font-weight: 600;
+}
+
+.bubble h1, .bubble h2, .bubble h3, .bubble h4 {
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.bubble h1 { font-size: 18px; }
+.bubble h2 { font-size: 16px; }
+.bubble h3 { font-size: 14px; }
+
+.bubble blockquote {
+  border-left: 3px solid var(--pai-primary);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--pai-text-muted);
+}
+
+.bubble hr {
+  border: none;
+  border-top: 1px solid var(--pai-border);
+  margin: 12px 0;
+}
+
+/* ── Tool call cards ───────────────────────────────────────── */
+
+.tool-card {
+  background: var(--pai-tool-bg);
+  border: 1px solid var(--pai-tool-border);
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.tool-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tool-card-header:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+.tool-status-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tool-name {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pai-primary-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tool-name { color: var(--pai-primary-light); }
+  .tool-card-header:hover { background: rgba(255,255,255,0.03); }
+}
+
+.tool-toggle {
+  margin-left: auto;
+  color: var(--pai-text-muted);
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.tool-toggle.expanded { transform: rotate(90deg); }
+
+.tool-card-body {
+  display: none;
+  padding: 0 12px 10px;
+  font-size: 12px;
+  border-top: 1px solid var(--pai-tool-border);
+}
+
+.tool-card-body.expanded {
+  display: block;
+}
+
+.tool-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pai-text-muted);
+  margin: 8px 0 4px;
+}
+
+.tool-section-content {
+  background: var(--pai-code-bg);
+  border-radius: 4px;
+  padding: 8px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ── Streaming cursor ──────────────────────────────────────── */
+
+.streaming-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 16px;
+  background: var(--pai-primary);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Error display ─────────────────────────────────────────── */
+
+.error-message {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--pai-error);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+/* ── Input area ────────────────────────────────────────────── */
+
+.input-area {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--pai-border);
+  flex-shrink: 0;
+}
+
+.input-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.input-textarea {
+  flex: 1;
+  resize: none;
+  padding: 10px 14px;
+  border: 1px solid var(--pai-border);
+  border-radius: 12px;
+  background: var(--pai-input-bg);
+  color: var(--pai-text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 42px;
+  max-height: 160px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-textarea:focus {
+  border-color: var(--pai-primary);
+}
+
+.input-textarea::placeholder {
+  color: var(--pai-text-muted);
+}
+
+.send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--pai-primary);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.send-btn:hover { background: var(--pai-primary-dark); }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.send-btn svg { width: 18px; height: 18px; }
+
+.stop-btn {
+  background: var(--pai-error);
+}
+.stop-btn:hover { background: #dc2626; }
+
+/* ── Slash command hints ───────────────────────────────────── */
+
+.slash-hints {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: var(--pai-card-bg);
+  border: 1px solid var(--pai-border);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.slash-hints.visible { display: block; }
+
+.slash-hint-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.slash-hint-item:hover { background: var(--pai-tint); }
+
+.slash-hint-cmd {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pai-primary);
+  min-width: 90px;
+}
+
+.slash-hint-desc {
+  font-size: 12px;
+  color: var(--pai-text-muted);
+}
+
+/* ── Input container (relative for slash hints) ────────────── */
+
+.input-container {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ── Loading spinner ────────────────────────────────────────── */
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pai-primary);
+  animation: dot-bounce 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-icon">P</span>
+      <span class="sidebar-title">PegasusAI</span>
+      <button class="sidebar-toggle" onclick="toggleSidebar(false)" title="Hide sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-branding">
+        <div class="sidebar-tagline">Chat-based workflow assistant</div>
+        <span class="sidebar-badge">Pegasus AI Workbench</span>
+      </div>
+      <div class="sidebar-desc">
+        Create, run, and debug <strong>Pegasus WMS</strong> workflows through natural language.
+        Uses tools to write files, execute commands, and manage workflow lifecycle.
+        Configure your provider in <strong>LLM_Setup.ipynb</strong>.
+      </div>
+
+      <button class="new-chat-btn" onclick="newChat()" title="Start a new conversation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Chat
+      </button>
+
+      <!-- Model picker -->
+      <div class="config-picker">
+        <div class="provider-name" id="providerName" style="display:none"></div>
+        <label class="config-label">Model</label>
+        <div id="modelPickerContent">
+          <span class="config-loading">Loading models...</span>
+        </div>
+      </div>
+
+      <!-- Agent picker -->
+      <div class="config-picker">
+        <label class="config-label">Agent</label>
+        <div id="agentPickerContent">
+          <span class="config-loading">Loading agents...</span>
+        </div>
+      </div>
+
+      <div class="sidebar-tips">
+        <strong>Slash commands</strong><br>
+        <code>/scaffold</code> New workflow project<br>
+        <code>/wrapper</code> Generate wrapper script<br>
+        <code>/dockerfile</code> Generate Dockerfile<br>
+        <code>/review</code> Audit workflow<br>
+        <code>/debug</code> Diagnose failures<br>
+        <code>/convert</code> Convert from Snakemake/Nextflow<br>
+        <code>/help</code> Show all commands
+      </div>
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="main">
+    <div class="main-header">
+      <button class="sidebar-open-btn" id="sidebarOpenBtn" onclick="toggleSidebar(true)" title="Show sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+      <span class="header-title">PegasusAI</span>
+      <span class="header-badge">Chat</span>
+      <div class="header-actions">
+        <button class="header-btn" onclick="newChat()" title="New chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          New
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages" id="messagesArea">
+      <div class="welcome-message">
+        <span class="welcome-icon">&#9878;</span>
+        <div class="welcome-title">PegasusAI</div>
+        <div class="welcome-sub">
+          Ask me to create Pegasus WMS workflows, generate wrapper scripts,
+          build Dockerfiles, or debug workflow failures. Try typing
+          <strong>/scaffold</strong> to get started!
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <div class="input-container">
+        <div class="slash-hints" id="slashHints"></div>
+        <div class="input-wrapper">
+          <textarea
+            class="input-textarea"
+            id="chatInput"
+            placeholder="Ask about Pegasus workflows..."
+            rows="1"
+            oninput="onInputChange()"
+            onkeydown="onInputKeydown(event)"
+          ></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let conversationMessages = [];
+let selectedModel = '';
+let selectedAgent = 'general';
+let isStreaming = false;
+let currentRequestId = '';
+let currentAssistantEl = null;
+let currentAssistantText = '';
+
+// Resolve base URL for API calls (works behind jupyter-server-proxy)
+const BASE = window.location.pathname.replace(/\/pegasus-ai-panel\/?$/, '');
+
+const SLASH_COMMANDS = [
+  { cmd: '/scaffold', desc: 'Generate a new Pegasus workflow project' },
+  { cmd: '/wrapper', desc: 'Generate a wrapper script for a pipeline step' },
+  { cmd: '/dockerfile', desc: 'Generate a Dockerfile for a workflow' },
+  { cmd: '/convert', desc: 'Convert Snakemake/Nextflow to Pegasus' },
+  { cmd: '/review', desc: 'Audit a workflow against best practices' },
+  { cmd: '/debug', desc: 'Diagnose a workflow failure' },
+  { cmd: '/help', desc: 'Show available commands' },
+];
+
+// ── Helpers ─────────────────────────────────────────────────────
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function generateId() {
+  return 'req_' + Math.random().toString(36).substr(2, 9);
+}
+
+// ── Simple Markdown renderer ────────────────────────────────────
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = escapeHtml(text);
+
+  // Code blocks (```lang\n...\n```)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(m, lang, code) {
+    return '<pre><code>' + code + '</code></pre>';
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headers
+  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold and italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Horizontal rules
+  html = html.replace(/^---+$/gm, '<hr>');
+
+  // Blockquotes
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Unordered lists
+  html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+  // Ordered lists
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+  // Tables
+  html = html.replace(/^\|(.+)\|\s*\n\|[\-: |]+\|\s*\n((?:\|.+\|\s*\n?)*)/gm, function(m, header, body) {
+    let table = '<table><thead><tr>';
+    header.split('|').filter(c => c.trim()).forEach(c => {
+      table += '<th>' + c.trim() + '</th>';
+    });
+    table += '</tr></thead><tbody>';
+    body.trim().split('\n').forEach(row => {
+      table += '<tr>';
+      row.split('|').filter(c => c.trim()).forEach(c => {
+        table += '<td>' + c.trim() + '</td>';
+      });
+      table += '</tr>';
+    });
+    table += '</tbody></table>';
+    return table;
+  });
+
+  // Paragraphs (simple: double newline → <p>)
+  html = html.replace(/\n\n/g, '</p><p>');
+  // Single newlines → <br> (except inside pre/code)
+  html = html.replace(/\n/g, '<br>');
+
+  return '<p>' + html + '</p>';
+}
+
+// ── Sidebar toggle ──────────────────────────────────────────────
+
+function toggleSidebar(open) {
+  document.getElementById('sidebar').classList.toggle('collapsed', !open);
+  document.getElementById('sidebarOpenBtn').style.display = open ? 'none' : 'flex';
+}
+
+// ── New Chat ────────────────────────────────────────────────────
+
+function newChat() {
+  if (isStreaming) stopStreaming();
+  conversationMessages = [];
+  currentAssistantEl = null;
+  currentAssistantText = '';
+  const area = document.getElementById('messagesArea');
+  area.innerHTML =
+    '<div class="welcome-message">' +
+      '<span class="welcome-icon">&#9878;</span>' +
+      '<div class="welcome-title">PegasusAI</div>' +
+      '<div class="welcome-sub">' +
+        'Ask me to create Pegasus WMS workflows, generate wrapper scripts, ' +
+        'build Dockerfiles, or debug workflow failures. Try typing ' +
+        '<strong>/scaffold</strong> to get started!' +
+      '</div>' +
+    '</div>';
+}
+
+// ── Slash command hints ─────────────────────────────────────────
+
+function onInputChange() {
+  const input = document.getElementById('chatInput');
+  const hints = document.getElementById('slashHints');
+
+  // Auto-grow textarea
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+
+  const text = input.value;
+  if (text.startsWith('/') && !text.includes(' ') && text.length < 15) {
+    const filter = text.toLowerCase();
+    const matches = SLASH_COMMANDS.filter(c => c.cmd.startsWith(filter));
+    if (matches.length > 0) {
+      hints.innerHTML = matches.map(c =>
+        '<div class="slash-hint-item" onclick="selectSlashCommand(\'' + c.cmd + '\')">' +
+          '<span class="slash-hint-cmd">' + c.cmd + '</span>' +
+          '<span class="slash-hint-desc">' + escapeHtml(c.desc) + '</span>' +
+        '</div>'
+      ).join('');
+      hints.classList.add('visible');
+      return;
+    }
+  }
+  hints.classList.remove('visible');
+}
+
+function selectSlashCommand(cmd) {
+  const input = document.getElementById('chatInput');
+  input.value = cmd + ' ';
+  input.focus();
+  document.getElementById('slashHints').classList.remove('visible');
+}
+
+function onInputKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+  if (event.key === 'Escape') {
+    document.getElementById('slashHints').classList.remove('visible');
+  }
+}
+
+// ── Message rendering ───────────────────────────────────────────
+
+function addUserMessage(text) {
+  const area = document.getElementById('messagesArea');
+  // Remove welcome message if present
+  const welcome = area.querySelector('.welcome-message');
+  if (welcome) welcome.remove();
+
+  const div = document.createElement('div');
+  div.className = 'message message-user';
+  div.innerHTML = '<div class="bubble">' + escapeHtml(text) + '</div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function startAssistantMessage() {
+  const area = document.getElementById('messagesArea');
+  const div = document.createElement('div');
+  div.className = 'message message-assistant';
+  div.innerHTML =
+    '<div class="assistant-avatar">P</div>' +
+    '<div class="assistant-content">' +
+      '<div class="bubble streaming-cursor"></div>' +
+    '</div>';
+  area.appendChild(div);
+  currentAssistantEl = div.querySelector('.assistant-content');
+  currentAssistantText = '';
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function appendAssistantText(text) {
+  currentAssistantText += text;
+  const bubble = currentAssistantEl.querySelector('.bubble');
+  bubble.innerHTML = renderMarkdown(currentAssistantText);
+  bubble.classList.add('streaming-cursor');
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function finishAssistantMessage() {
+  if (!currentAssistantEl) return;
+  const bubble = currentAssistantEl.querySelector('.bubble');
+  if (bubble) {
+    bubble.classList.remove('streaming-cursor');
+    bubble.innerHTML = renderMarkdown(currentAssistantText);
+  }
+}
+
+function addToolCallCard(toolCall) {
+  if (!currentAssistantEl) return;
+  const card = document.createElement('div');
+  card.className = 'tool-card';
+  card.dataset.toolId = toolCall.id;
+
+  const argsStr = JSON.stringify(toolCall.arguments, null, 2);
+
+  card.innerHTML =
+    '<div class="tool-card-header" onclick="toggleToolCard(this)">' +
+      '<span class="tool-status-icon">&#9881;</span>' +
+      '<span class="tool-name">' + escapeHtml(toolCall.name) + '</span>' +
+      '<span class="tool-toggle">&#9654;</span>' +
+    '</div>' +
+    '<div class="tool-card-body">' +
+      '<div class="tool-section-label">Arguments</div>' +
+      '<div class="tool-section-content">' + escapeHtml(argsStr) + '</div>' +
+      '<div class="tool-section-label">Result</div>' +
+      '<div class="tool-section-content tool-result">Running...</div>' +
+    '</div>';
+
+  // Insert before the bubble (text comes after tools)
+  const bubble = currentAssistantEl.querySelector('.bubble');
+  currentAssistantEl.insertBefore(card, bubble);
+
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function updateToolResult(toolResult) {
+  if (!currentAssistantEl) return;
+  const card = currentAssistantEl.querySelector('[data-tool-id="' + toolResult.id + '"]');
+  if (!card) return;
+
+  // Update status icon
+  const icon = card.querySelector('.tool-status-icon');
+  icon.textContent = '\u2713';  // checkmark
+  icon.style.color = 'var(--pai-success)';
+
+  // Update result
+  const resultEl = card.querySelector('.tool-result');
+  resultEl.textContent = toolResult.result;
+
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function addErrorMessage(text) {
+  if (!currentAssistantEl) {
+    startAssistantMessage();
+  }
+  const err = document.createElement('div');
+  err.className = 'error-message';
+  err.textContent = text;
+  currentAssistantEl.appendChild(err);
+  const area = document.getElementById('messagesArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function toggleToolCard(header) {
+  const body = header.nextElementSibling;
+  const toggle = header.querySelector('.tool-toggle');
+  body.classList.toggle('expanded');
+  toggle.classList.toggle('expanded');
+}
+
+// ── Send / Stream ───────────────────────────────────────────────
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('slashHints').classList.remove('visible');
+
+  addUserMessage(text);
+  conversationMessages.push({ role: 'user', content: text });
+
+  isStreaming = true;
+  currentRequestId = generateId();
+  updateSendButton();
+
+  startAssistantMessage();
+
+  try {
+    const url = new URL(BASE + '/api/pegasus-ai/chat/stream', window.location.origin);
+    const resp = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: conversationMessages,
+        model: selectedModel,
+        agent: selectedAgent,
+        request_id: currentRequestId,
+      }),
+    });
+
+    if (!resp.ok) {
+      throw new Error('HTTP ' + resp.status);
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();  // Keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+
+        try {
+          const event = JSON.parse(data);
+
+          if (event.error) {
+            addErrorMessage(event.error);
+          } else if (event.content) {
+            appendAssistantText(event.content);
+          } else if (event.tool_call) {
+            addToolCallCard(event.tool_call);
+          } else if (event.tool_result) {
+            updateToolResult(event.tool_result);
+          }
+        } catch (e) {
+          // Skip malformed JSON
+        }
+      }
+    }
+  } catch (e) {
+    addErrorMessage('Connection error: ' + e.message);
+  }
+
+  finishAssistantMessage();
+
+  // Save assistant's response to conversation
+  if (currentAssistantText) {
+    conversationMessages.push({ role: 'assistant', content: currentAssistantText });
+  }
+
+  isStreaming = false;
+  currentRequestId = '';
+  currentAssistantEl = null;
+  updateSendButton();
+}
+
+async function stopStreaming() {
+  if (!isStreaming) return;
+  try {
+    const url = new URL(BASE + '/api/pegasus-ai/chat/stop', window.location.origin);
+    await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: currentRequestId }),
+    });
+  } catch (e) { /* ignore */ }
+  isStreaming = false;
+  currentRequestId = '';
+  finishAssistantMessage();
+  updateSendButton();
+}
+
+function updateSendButton() {
+  const btn = document.getElementById('sendBtn');
+  if (isStreaming) {
+    btn.className = 'send-btn stop-btn';
+    btn.title = 'Stop generation';
+    btn.onclick = stopStreaming;
+    btn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  } else {
+    btn.className = 'send-btn';
+    btn.title = 'Send message';
+    btn.onclick = sendMessage;
+    btn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<line x1="22" y1="2" x2="11" y2="13"/>' +
+        '<polygon points="22 2 15 22 11 13 2 9 22 2"/>' +
+      '</svg>';
+  }
+}
+
+// ── Model / Agent pickers ───────────────────────────────────────
+
+async function loadModels() {
+  try {
+    const url = new URL(BASE + '/api/pegasus-ai/models', window.location.origin);
+    const resp = await fetch(url.toString());
+    const data = await resp.json();
+    const models = data.models || [];
+    const def = data.default || (models[0] || '');
+    selectedModel = def;
+
+    const providerEl = document.getElementById('providerName');
+    const PROVIDER_NAMES = {
+      fabric: 'FABRIC AI', nrp: 'NRP (Nautilus)', anthropic: 'Anthropic',
+      openai: 'OpenAI', ollama: 'Ollama', custom: 'Custom',
+    };
+    if (data.provider) {
+      providerEl.textContent = PROVIDER_NAMES[data.provider] || data.provider;
+      providerEl.style.display = 'block';
+    }
+
+    const container = document.getElementById('modelPickerContent');
+    if (models.length === 0) {
+      container.innerHTML = '<span class="config-loading">No models available. Configure LLM_Setup.ipynb first.</span>';
+      return;
+    }
+
+    let html = '<select class="config-select" id="modelSelect" onchange="selectedModel=this.value">';
+    for (const m of models) {
+      const sel = m === def ? ' selected' : '';
+      html += '<option value="' + escapeHtml(m) + '"' + sel + '>' + escapeHtml(m) + '</option>';
+    }
+    html += '</select>';
+    container.innerHTML = html;
+  } catch (e) {
+    document.getElementById('modelPickerContent').innerHTML =
+      '<span class="config-loading">Failed to load models</span>';
+  }
+}
+
+async function loadAgents() {
+  try {
+    const url = new URL(BASE + '/api/pegasus-ai/agents', window.location.origin);
+    const resp = await fetch(url.toString());
+    const data = await resp.json();
+    const agents = data.agents || {};
+
+    const container = document.getElementById('agentPickerContent');
+    const agentIds = Object.keys(agents);
+    if (agentIds.length === 0) {
+      container.innerHTML = '<span class="config-loading">No agents available</span>';
+      return;
+    }
+
+    let html = '<select class="config-select" id="agentSelect" onchange="selectedAgent=this.value">';
+    for (const id of agentIds) {
+      const agent = agents[id];
+      const sel = id === 'general' ? ' selected' : '';
+      html += '<option value="' + escapeHtml(id) + '"' + sel + '>' +
+              escapeHtml(agent.name) + '</option>';
+    }
+    html += '</select>';
+    if (agents[agentIds[0]]) {
+      html += '<div class="config-hint" id="agentHint">' +
+              escapeHtml(agents.general?.description || '') + '</div>';
+    }
+    container.innerHTML = html;
+
+    // Update hint on change
+    const select = document.getElementById('agentSelect');
+    if (select) {
+      select.addEventListener('change', function() {
+        const hint = document.getElementById('agentHint');
+        if (hint && agents[this.value]) {
+          hint.textContent = agents[this.value].description;
+        }
+      });
+    }
+  } catch (e) {
+    document.getElementById('agentPickerContent').innerHTML =
+      '<span class="config-loading">Failed to load agents</span>';
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────────
+
+function init() {
+  loadModels();
+  loadAgents();
+  document.getElementById('chatInput').focus();
+}
+
+init();
+</script>
+</body>
+</html>

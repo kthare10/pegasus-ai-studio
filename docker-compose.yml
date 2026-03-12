@@ -1,0 +1,32 @@
+services:
+  workbench:
+    build:
+      context: ..
+      dockerfile: pegasus-ai-workbench/Dockerfile
+    image: pegasus-ai-workbench:latest
+    ports:
+      - "9999:8888"
+      - "9198:9198"   # OpenCode web (direct access for SSE streaming)
+    env_file:
+      - .env
+    volumes:
+      # Persist user home across restarts
+      - workbench-home:/home/jovyan
+      # Bind-mount a local work directory
+      - ./work:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+
+  # ── Uncomment for local Ollama inference (air-gapped mode) ──
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-models:/root/.ollama
+  #   # Pull a model on first run:
+  #   #   docker compose exec ollama ollama pull qwen2.5-coder:7b
+
+volumes:
+  workbench-home:
+  # ollama-models:

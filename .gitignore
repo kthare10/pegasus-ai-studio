@@ -1,0 +1,22 @@
+# Environment (may contain API keys)
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime work directory (bind-mounted, user data)
+work/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Claude Code local settings
+.claude/
+
+# macOS
+.DS_Store

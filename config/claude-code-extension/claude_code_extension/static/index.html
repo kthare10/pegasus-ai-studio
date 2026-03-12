@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — Pegasus AI Workbench</title>
+<style>
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --cc-bg: #f8f9fa;
+  --cc-text: #1a1a2e;
+  --cc-text-muted: #6b7280;
+  --cc-border: #e5e7eb;
+  --cc-primary: #da7756;
+  --cc-primary-dark: #c4623f;
+  --cc-primary-light: #e8a088;
+  --cc-primary-bg: rgba(218, 119, 86, 0.08);
+  --cc-success: #10b981;
+  --cc-error: #ef4444;
+  --cc-warning: #f59e0b;
+  --cc-tint: #f3f4f6;
+  --cc-card-bg: #ffffff;
+  --cc-code-bg: #f1f5f9;
+  --cc-premium-bg: linear-gradient(135deg, #da7756, #c4623f);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cc-bg: #0f172a;
+    --cc-text: #e2e8f0;
+    --cc-text-muted: #94a3b8;
+    --cc-border: rgba(255,255,255,0.08);
+    --cc-primary: #e8a088;
+    --cc-primary-dark: #da7756;
+    --cc-primary-light: #f0c0ad;
+    --cc-primary-bg: rgba(232, 160, 136, 0.12);
+    --cc-success: #34d399;
+    --cc-error: #f87171;
+    --cc-warning: #fbbf24;
+    --cc-tint: rgba(255,255,255,0.04);
+    --cc-card-bg: #1e293b;
+    --cc-code-bg: #1e293b;
+    --cc-premium-bg: linear-gradient(135deg, #da7756, #c4623f);
+  }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--cc-bg);
+  color: var(--cc-text);
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* ── Layout ────────────────────────────────────────────────── */
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--cc-premium-bg);
+  color: white;
+  margin-bottom: 16px;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.premium-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--cc-premium-bg);
+  color: white;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.header-sub {
+  font-size: 14px;
+  color: var(--cc-text-muted);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── Status card ───────────────────────────────────────────── */
+
+.status-card {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.status-row + .status-row {
+  border-top: 1px solid var(--cc-border);
+}
+
+.status-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.status-label {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.status-value {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.status-ok {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--cc-success);
+}
+
+.status-missing {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--cc-error);
+}
+
+.status-loading {
+  background: var(--cc-tint);
+  color: var(--cc-text-muted);
+}
+
+/* ── Action buttons ────────────────────────────────────────── */
+
+.actions {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.launch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  background: var(--cc-premium-bg);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.launch-btn:hover { opacity: 0.9; }
+.launch-btn:active { transform: scale(0.98); }
+.launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.launch-btn svg { width: 20px; height: 20px; }
+
+.setup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 2px solid var(--cc-primary);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--cc-primary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.setup-btn:hover {
+  background: var(--cc-primary-bg);
+}
+
+.setup-btn svg { width: 18px; height: 18px; }
+
+.action-hint {
+  font-size: 12px;
+  color: var(--cc-text-muted);
+  margin-top: 10px;
+}
+
+/* ── Setup instructions ────────────────────────────────────── */
+
+.setup-instructions {
+  display: none;
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.setup-instructions.visible { display: block; }
+
+.setup-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup-step {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.setup-step + .setup-step {
+  border-top: 1px solid var(--cc-border);
+}
+
+.step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--cc-primary-bg);
+  color: var(--cc-primary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cc-text-muted);
+}
+
+.step-content strong {
+  color: var(--cc-text);
+}
+
+.step-content code {
+  background: var(--cc-code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+/* ── Feature cards ─────────────────────────────────────────── */
+
+.features-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.feature-card {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.feature-icon {
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.feature-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.feature-desc {
+  font-size: 12px;
+  color: var(--cc-text-muted);
+  line-height: 1.5;
+}
+
+/* ── Comparison table ──────────────────────────────────────── */
+
+.comparison {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.comparison-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--cc-border);
+}
+
+.comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.comparison th, .comparison td {
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--cc-border);
+}
+
+.comparison th {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--cc-text-muted);
+  background: var(--cc-tint);
+}
+
+.comparison tr:last-child td { border-bottom: none; }
+
+.check { color: var(--cc-success); font-weight: 700; }
+.dash { color: var(--cc-text-muted); }
+
+/* ── Footer ────────────────────────────────────────────────── */
+
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--cc-text-muted);
+  padding: 16px 0;
+}
+
+.footer a {
+  color: var(--cc-primary);
+  text-decoration: none;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .features-grid { grid-template-columns: 1fr; }
+  .container { padding: 24px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon">C</div>
+    <div class="header-title">
+      Claude Code
+      <span class="premium-badge">Premium</span>
+    </div>
+    <div class="header-sub">
+      Anthropic's agentic coding tool with full Pegasus WMS plugin support.
+      Runs as a terminal CLI with tool use, multi-file editing, and deep codebase understanding.
+    </div>
+  </div>
+
+  <!-- Status card -->
+  <div class="status-card" id="statusCard">
+    <div class="status-row">
+      <span class="status-icon" id="binaryIcon">&#8987;</span>
+      <span class="status-label">Claude Code CLI</span>
+      <span class="status-value status-loading" id="binaryStatus">Checking...</span>
+    </div>
+    <div class="status-row">
+      <span class="status-icon" id="keyIcon">&#8987;</span>
+      <span class="status-label">Anthropic API Key</span>
+      <span class="status-value status-loading" id="keyStatus">Checking...</span>
+    </div>
+  </div>
+
+  <!-- Actions (shown based on status) -->
+  <div class="actions" id="actionsArea">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Setup instructions (hidden by default) -->
+  <div class="setup-instructions" id="setupInstructions">
+    <div class="setup-title">
+      <span>&#9881;</span> Setup Required
+    </div>
+    <div class="setup-step">
+      <span class="step-num">1</span>
+      <div class="step-content">
+        Open <strong>LLM_Setup.ipynb</strong> from the JupyterLab launcher and select
+        <strong>Anthropic</strong> as your provider. Enter your API key when prompted.
+      </div>
+    </div>
+    <div class="setup-step">
+      <span class="step-num">2</span>
+      <div class="step-content">
+        Alternatively, set the <code>ANTHROPIC_API_KEY</code> environment variable
+        in your <code>.env</code> file before starting the container.
+      </div>
+    </div>
+    <div class="setup-step">
+      <span class="step-num">3</span>
+      <div class="step-content">
+        Get an API key at
+        <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.
+        Claude Code requires a paid Anthropic API plan.
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="features-title">What Claude Code offers</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">&#9881;</div>
+      <div class="feature-name">Pegasus Plugin Skills</div>
+      <div class="feature-desc">
+        7 built-in slash commands: /pegasus-scaffold, /pegasus-wrapper,
+        /pegasus-dockerfile, /pegasus-review, /pegasus-debug, and more.
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128736;</div>
+      <div class="feature-name">Agentic Tool Use</div>
+      <div class="feature-desc">
+        Reads and edits files, runs shell commands, and manages
+        your workflow project autonomously.
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#128202;</div>
+      <div class="feature-name">Deep Codebase Understanding</div>
+      <div class="feature-desc">
+        Explores your entire project, understands dependencies,
+        and makes coordinated multi-file changes.
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9889;</div>
+      <div class="feature-name">Powered by Claude Opus/Sonnet</div>
+      <div class="feature-desc">
+        Uses Anthropic's most capable models for state-of-the-art
+        code generation and reasoning.
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div class="comparison">
+    <div class="comparison-title">AI Tools in Pegasus AI Workbench</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>PegasusAI</th>
+          <th>OpenCode</th>
+          <th>Claude Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Interface</td>
+          <td>Web chat</td>
+          <td>Web IDE</td>
+          <td>Terminal CLI</td>
+        </tr>
+        <tr>
+          <td>Pegasus skills</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>Tool use (file ops, shell)</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>Multi-provider support</td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="check">&#10003;</span></td>
+          <td><span class="dash">&#8212;</span> Anthropic only</td>
+        </tr>
+        <tr>
+          <td>Extended thinking</td>
+          <td><span class="dash">&#8212;</span></td>
+          <td><span class="dash">&#8212;</span></td>
+          <td><span class="check">&#10003;</span></td>
+        </tr>
+        <tr>
+          <td>Cost</td>
+          <td>Free*</td>
+          <td>Free*</td>
+          <td>Anthropic API key</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    * PegasusAI and OpenCode are free with any supported LLM provider (FABRIC AI, NRP, Ollama, etc.)
+  </div>
+</div>
+
+<script>
+// Resolve base URL for API calls (works behind jupyter-server-proxy)
+const BASE = window.location.pathname.replace(/\/claude-code-panel\/?$/, '');
+
+async function checkStatus() {
+  try {
+    const url = new URL(BASE + '/api/claude-code/status', window.location.origin);
+    const resp = await fetch(url.toString());
+    const data = await resp.json();
+
+    // Update binary status
+    const binaryIcon = document.getElementById('binaryIcon');
+    const binaryStatus = document.getElementById('binaryStatus');
+    if (data.has_binary) {
+      binaryIcon.textContent = '\u2713';
+      binaryStatus.textContent = 'Installed';
+      binaryStatus.className = 'status-value status-ok';
+    } else {
+      binaryIcon.textContent = '\u2717';
+      binaryStatus.textContent = 'Not found';
+      binaryStatus.className = 'status-value status-missing';
+    }
+
+    // Update key status
+    const keyIcon = document.getElementById('keyIcon');
+    const keyStatus = document.getElementById('keyStatus');
+    if (data.has_api_key) {
+      keyIcon.textContent = '\u2713';
+      keyStatus.textContent = 'Configured';
+      keyStatus.className = 'status-value status-ok';
+    } else {
+      keyIcon.textContent = '\u2717';
+      keyStatus.textContent = 'Not set';
+      keyStatus.className = 'status-value status-missing';
+    }
+
+    // Show appropriate action
+    const actions = document.getElementById('actionsArea');
+    const setup = document.getElementById('setupInstructions');
+
+    if (data.has_binary && data.has_api_key) {
+      actions.innerHTML =
+        '<button class="launch-btn" onclick="openTerminal()">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="4 17 10 11 4 5"/>' +
+            '<line x1="12" y1="19" x2="20" y2="19"/>' +
+          '</svg>' +
+          'Launch Claude Code' +
+        '</button>' +
+        '<div class="action-hint">Opens a terminal with <code>claude</code> ready to run in ~/work</div>';
+      setup.classList.remove('visible');
+    } else if (data.has_binary) {
+      actions.innerHTML =
+        '<button class="setup-btn" onclick="openSetupNotebook()">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M12 20h9"/>' +
+            '<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' +
+          '</svg>' +
+          'Configure API Key' +
+        '</button>';
+      setup.classList.add('visible');
+    } else {
+      actions.innerHTML =
+        '<div class="action-hint">Claude Code CLI is not installed in this image.</div>';
+      setup.classList.remove('visible');
+    }
+  } catch (e) {
+    document.getElementById('binaryStatus').textContent = 'Error';
+    document.getElementById('keyStatus').textContent = 'Error';
+  }
+}
+
+function openTerminal() {
+  // Navigate to JupyterLab terminal with claude pre-loaded
+  // Use the JupyterLab API to open a terminal
+  const termUrl = BASE + '/terminals/1';
+
+  // Try to use the JupyterLab command system if available
+  if (window.parent && window.parent.document) {
+    try {
+      // Post a message to JupyterLab to open a terminal
+      // JupyterLab listens for these in its command registry
+      window.parent.postMessage({
+        type: 'from-iframe-to-host',
+        command: 'terminal:create-new'
+      }, '*');
+    } catch (e) {
+      // Fallback: open terminal URL directly
+    }
+  }
+
+  // Reliable fallback: open a new terminal tab via the REST API
+  fetch(new URL(BASE + '/api/terminals', window.location.origin).toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  })
+  .then(r => r.json())
+  .then(data => {
+    const termName = data.name;
+    // Send the claude command to the terminal via websocket
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = wsProto + '//' + window.location.host + BASE + '/terminals/websocket/' + termName;
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = function() {
+      // Wait briefly for terminal to initialize, then send command
+      setTimeout(function() {
+        ws.send(JSON.stringify(["stdin", "cd ~/work && claude\r"]));
+        // Close our websocket — the terminal keeps running
+        setTimeout(function() { ws.close(); }, 500);
+      }, 1000);
+    };
+    // Navigate the parent to show the terminal
+    window.open(BASE + '/terminals/' + termName, '_blank');
+  })
+  .catch(function(err) {
+    // Last resort: just open terminals page
+    window.open(BASE + '/terminals/', '_blank');
+  });
+}
+
+function openSetupNotebook() {
+  window.open(BASE + '/notebooks/LLM_Setup.ipynb', '_blank');
+}
+
+// Check status on load
+checkStatus();
+</script>
+</body>
+</html>

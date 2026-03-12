@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCode — Pegasus AI Workbench</title>
+<style>
+/* ── CSS Variables (self-contained, no FABRIC theme dependency) ──── */
+:root {
+  --oc-bg: #f8f9fa;
+  --oc-sidebar-bg: #ffffff;
+  --oc-text: #1a1a2e;
+  --oc-text-muted: #6b7280;
+  --oc-border: #e5e7eb;
+  --oc-primary: #7c3aed;
+  --oc-primary-light: rgba(124, 58, 237, 0.12);
+  --oc-success: #10b981;
+  --oc-error: #ef4444;
+  --oc-tint: #f3f4f6;
+  --oc-input-bg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --oc-bg: #1a1a2e;
+    --oc-sidebar-bg: #12121e;
+    --oc-text: #e5e7eb;
+    --oc-text-muted: #9ca3af;
+    --oc-border: rgba(255,255,255,0.08);
+    --oc-primary: #a78bfa;
+    --oc-primary-light: rgba(167, 139, 250, 0.15);
+    --oc-success: #34d399;
+    --oc-error: #f87171;
+    --oc-tint: rgba(255,255,255,0.04);
+    --oc-input-bg: #1a1a2e;
+  }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--oc-bg);
+  color: var(--oc-text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+
+.tc-layout {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+
+.tc-sidebar {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  background: var(--oc-sidebar-bg);
+  border-right: 1px solid var(--oc-border);
+  transition: width 0.2s, min-width 0.2s, opacity 0.2s;
+  overflow: hidden;
+}
+
+.tc-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tc-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--oc-border);
+}
+
+.tc-sidebar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: white;
+}
+
+.tc-sidebar-title {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.tc-sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.tc-sidebar-toggle:hover {
+  background: var(--oc-tint);
+}
+
+.tc-sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Sidebar content ────────────────────────────────────────── */
+
+.tc-sidebar-section {
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tc-sidebar-branding {
+  margin-bottom: 12px;
+}
+
+.tc-sidebar-tagline {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.tc-sidebar-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--oc-primary-light);
+  color: var(--oc-primary);
+}
+
+.tc-sidebar-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--oc-text-muted);
+  margin-bottom: 16px;
+}
+
+.tc-sidebar-desc strong {
+  color: var(--oc-text);
+  font-weight: 600;
+}
+
+.tc-new-session-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--oc-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--oc-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 16px;
+}
+
+.tc-new-session-btn svg { width: 16px; height: 16px; }
+.tc-new-session-btn:hover { background: var(--oc-tint); }
+
+.tc-sidebar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--oc-text-muted);
+  padding: 8px 0;
+}
+
+.tc-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tc-status-dot.connected {
+  background: var(--oc-success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  animation: tc-pulse 2s ease-in-out infinite;
+}
+
+.tc-status-dot.disconnected {
+  background: var(--oc-error);
+}
+
+@keyframes tc-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── Model picker ───────────────────────────────────────────── */
+
+.tc-model-picker {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--oc-tint);
+  border-radius: 8px;
+}
+
+.tc-model-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--oc-text-muted);
+  margin-bottom: 6px;
+}
+
+.tc-model-select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  border: 1px solid var(--oc-border);
+  border-radius: 6px;
+  background: var(--oc-input-bg);
+  color: var(--oc-text);
+  cursor: pointer;
+}
+
+.tc-model-select:focus {
+  outline: none;
+  border-color: var(--oc-primary);
+}
+
+.tc-model-hint {
+  font-size: 10px;
+  color: var(--oc-text-muted);
+  margin-top: 4px;
+}
+
+.tc-model-loading {
+  font-size: 11px;
+  color: var(--oc-text-muted);
+  font-style: italic;
+}
+
+/* ── Tips ───────────────────────────────────────────────────── */
+
+.tc-sidebar-tips {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--oc-tint);
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--oc-text-muted);
+}
+
+.tc-sidebar-tips strong {
+  color: var(--oc-text);
+  font-weight: 600;
+}
+
+/* ── Main area ──────────────────────────────────────────────── */
+
+.tc-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tc-main-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--oc-border);
+  flex-shrink: 0;
+}
+
+.tc-sidebar-open-btn {
+  background: none;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.tc-sidebar-open-btn:hover {
+  background: var(--oc-tint);
+  border-color: var(--oc-primary);
+}
+
+.tc-sidebar-open-btn svg { width: 18px; height: 18px; }
+
+.tc-header-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tc-header-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--oc-primary-light);
+  color: var(--oc-primary);
+}
+
+.tc-refresh-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--oc-border);
+  color: var(--oc-text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tc-refresh-btn:hover {
+  background: var(--oc-tint);
+  color: var(--oc-primary);
+  border-color: var(--oc-primary);
+}
+
+.tc-refresh-btn svg { width: 14px; height: 14px; }
+
+/* ── Terminal wrapper ───────────────────────────────────────── */
+
+.tc-terminal-wrapper {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.tc-opencode-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+  background: #1a1a2e;
+}
+
+/* ── Loading / error ────────────────────────────────────────── */
+
+.tc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+}
+
+.tc-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--oc-primary-light);
+  border-top-color: var(--oc-primary);
+  border-radius: 50%;
+  animation: tc-spin 0.8s linear infinite;
+}
+
+@keyframes tc-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tc-loading-text {
+  font-size: 14px;
+  color: var(--oc-text-muted);
+  font-weight: 500;
+}
+
+.tc-loading-error {
+  color: var(--oc-error);
+}
+</style>
+</head>
+<body>
+
+<div class="tc-layout">
+  <!-- Sidebar -->
+  <div class="tc-sidebar" id="sidebar">
+    <div class="tc-sidebar-header">
+      <span class="tc-sidebar-icon">OC</span>
+      <span class="tc-sidebar-title">OpenCode</span>
+      <button class="tc-sidebar-toggle" onclick="toggleSidebar(false)" title="Hide sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+    </div>
+    <div class="tc-sidebar-section">
+      <div class="tc-sidebar-branding">
+        <div class="tc-sidebar-tagline">Terminal-based AI coding assistant</div>
+        <span class="tc-sidebar-badge">Pegasus AI Workbench</span>
+      </div>
+      <div class="tc-sidebar-desc">
+        Interactive AI assistant with built-in <strong>Pegasus WMS</strong> tools, skills, and agents.
+        Supports multiple LLM providers. Configure your provider in <strong>LLM_Setup.ipynb</strong>.
+      </div>
+
+      <button class="tc-new-session-btn" onclick="restartSession()" title="Restart OpenCode session">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Session
+      </button>
+
+      <div class="tc-sidebar-status">
+        <span class="tc-status-dot" id="statusDot"></span>
+        <span id="statusText">Checking...</span>
+      </div>
+
+      <div class="tc-model-picker">
+        <div class="tc-model-provider" id="modelProvider" style="display:none;font-size:12px;font-weight:600;color:var(--oc-primary);margin-bottom:6px;"></div>
+        <label class="tc-model-label">Model</label>
+        <div id="modelPickerContent">
+          <span class="tc-model-loading">Loading models...</span>
+        </div>
+      </div>
+
+      <div class="tc-sidebar-tips">
+        <strong>Tips</strong><br>
+        Type your request at the prompt. Use <code>/help</code> for available commands and skills.
+        Change the model and click "New Session" to switch models.
+      </div>
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div class="tc-main">
+    <div class="tc-main-header">
+      <button class="tc-sidebar-open-btn" id="sidebarOpenBtn" onclick="toggleSidebar(true)" title="Show sidebar" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="9" y1="3" x2="9" y2="21"/>
+        </svg>
+      </button>
+      <span class="tc-header-title">OpenCode</span>
+      <span class="tc-header-badge">Web</span>
+      <button class="tc-refresh-btn" onclick="refreshIframe()" title="Reload OpenCode web UI">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+    <div class="tc-terminal-wrapper" id="terminalWrapper">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let selectedModel = '';
+let sidebarOpen = true;
+
+// Resolve base URL for API calls (works behind jupyter-server-proxy)
+const BASE = window.location.pathname.replace(/\/opencode-panel\/?$/, '');
+
+// ── API helpers ────────────────────────────────────────────────
+async function apiCall(method, endpoint, params) {
+  const url = new URL(BASE + endpoint, window.location.origin);
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      url.searchParams.set(k, v);
+    }
+  }
+  const resp = await fetch(url.toString(), { method });
+  return resp.json();
+}
+
+// ── UI updates ─────────────────────────────────────────────────
+function setStatus(status, msg) {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.className = 'tc-status-dot ' + (status === 'running' ? 'connected' : 'disconnected');
+  text.textContent = msg || (status === 'running' ? 'Running' : status === 'loading' ? 'Starting...' : 'Error');
+}
+
+function showLoading() {
+  setStatus('loading', 'Starting...');
+  document.getElementById('terminalWrapper').innerHTML =
+    '<div class="tc-loading">' +
+      '<div class="tc-loading-spinner"></div>' +
+      '<div class="tc-loading-text">Starting OpenCode...</div>' +
+    '</div>';
+}
+
+function showError(msg) {
+  setStatus('error', 'Error');
+  document.getElementById('terminalWrapper').innerHTML =
+    '<div class="tc-loading">' +
+      '<div class="tc-loading-text tc-loading-error">' + escapeHtml(msg) + '</div>' +
+      '<button class="tc-new-session-btn" style="max-width:200px;margin-top:12px" onclick="restartSession()">Retry</button>' +
+    '</div>';
+}
+
+function showIframe() {
+  setStatus('running', 'Running');
+  // Connect directly to OpenCode's port — jupyter-server-proxy can't
+  // reliably proxy OpenCode's web UI (absolute asset paths, SSE streams).
+  // Port 9198 must be exposed in docker-compose / k8s / OOD config.
+  var directUrl = window.location.protocol + '//' + window.location.hostname + ':9198';
+  document.getElementById('terminalWrapper').innerHTML =
+    '<iframe class="tc-opencode-iframe" id="ocIframe" src="' + directUrl + '" ' +
+    'title="OpenCode" allow="clipboard-read; clipboard-write"></iframe>';
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Sidebar toggle ─────────────────────────────────────────────
+function toggleSidebar(open) {
+  sidebarOpen = open;
+  document.getElementById('sidebar').classList.toggle('collapsed', !open);
+  document.getElementById('sidebarOpenBtn').style.display = open ? 'none' : 'flex';
+}
+
+// ── Iframe refresh ─────────────────────────────────────────────
+function refreshIframe() {
+  const iframe = document.getElementById('ocIframe');
+  if (iframe) {
+    iframe.src = iframe.src;
+  }
+}
+
+// ── Session management ─────────────────────────────────────────
+async function startSession(model) {
+  showLoading();
+  try {
+    const params = {};
+    if (model) params.model = model;
+    const res = await apiCall('POST', '/api/opencode-web/start', params);
+    if (res.status === 'running' && res.port) {
+      showIframe();
+    } else {
+      showError(res.error || 'Failed to start OpenCode');
+    }
+  } catch (e) {
+    showError(e.message || 'Failed to start OpenCode');
+  }
+}
+
+async function restartSession() {
+  showLoading();
+  try {
+    await apiCall('POST', '/api/opencode-web/stop');
+    // Wait for OpenCode to fully shut down before restarting
+    await new Promise(r => setTimeout(r, 1500));
+  } catch (e) { /* ignore */ }
+  await startSession(selectedModel);
+}
+
+// ── Model picker ───────────────────────────────────────────────
+async function loadModels() {
+  try {
+    const data = await apiCall('GET', '/api/opencode-web/models');
+    const models = data.models || [];
+    const def = data.default || (models[0] || '');
+    selectedModel = def;
+
+    // Show provider name if available
+    const providerEl = document.getElementById('modelProvider');
+    const PROVIDER_NAMES = {fabric: 'FABRIC AI', nrp: 'NRP (Nautilus)', anthropic: 'Anthropic', openai: 'OpenAI', ollama: 'Ollama', custom: 'Custom'};
+    if (data.provider) {
+      providerEl.textContent = PROVIDER_NAMES[data.provider] || data.provider;
+      providerEl.style.display = 'block';
+    }
+
+    const container = document.getElementById('modelPickerContent');
+    if (models.length === 0) {
+      container.innerHTML = '<span class="tc-model-loading">No models available</span>';
+      return;
+    }
+
+    let html = '<select class="tc-model-select" id="modelSelect" onchange="onModelChange(this.value)">';
+    for (const m of models) {
+      const sel = m === def ? ' selected' : '';
+      html += '<option value="' + escapeHtml(m) + '"' + sel + '>' + escapeHtml(m) + '</option>';
+    }
+    html += '</select>';
+    html += '<div class="tc-model-hint">Change model and click &ldquo;New Session&rdquo; to apply</div>';
+    container.innerHTML = html;
+  } catch (e) {
+    document.getElementById('modelPickerContent').innerHTML =
+      '<span class="tc-model-loading">Failed to load models</span>';
+  }
+}
+
+function onModelChange(value) {
+  selectedModel = value;
+}
+
+// ── Init ───────────────────────────────────────────────────────
+async function init() {
+  // Load models in parallel with status check
+  loadModels();
+
+  try {
+    const res = await apiCall('GET', '/api/opencode-web/status');
+    if (res.status === 'running' && res.port) {
+      showIframe();
+    } else {
+      await startSession(selectedModel);
+    }
+  } catch (e) {
+    await startSession(selectedModel);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

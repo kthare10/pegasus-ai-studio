@@ -1,0 +1,73 @@
+# Pegasus AI Workbench — Lite variant
+# JupyterLab + Pegasus WMS + HTCondor + Jupyter AI only.
+# No CLI AI agents (Claude Code, OpenCode).
+#
+# Build context: parent tool/ directory.
+#
+# Usage:
+#   docker build -f pegasus-ai-workbench/Dockerfile.lite -t pegasus-ai-workbench:lite .
+
+# ── Stage 1: Base + system packages ──────────────────────────
+FROM quay.io/jupyter/scipy-notebook:python-3.11 AS base
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        git \
+        vim \
+        htop \
+        tmux \
+        jq \
+        gnupg \
+        software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Stage 2: Pegasus WMS + HTCondor ──────────────────────────
+RUN pip install --no-cache-dir pegasus-wms==5.1.2
+
+# HTCondor client (official APT repo for 25.x on Noble)
+RUN curl -fsSL https://htcss-downloads.chtc.wisc.edu/repo/keys/HTCondor-25.x-Key \
+        -o /etc/apt/keyrings/htcondor.asc \
+    && curl -fsSL https://htcss-downloads.chtc.wisc.edu/repo/ubuntu/htcondor-25.x-noble.list \
+        -o /etc/apt/sources.list.d/htcondor.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends condor \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Stage 3: Jupyter AI + pegasus-ai ─────────────────────────
+RUN pip install --no-cache-dir \
+        jupyter-ai \
+        jupyter-server-proxy \
+        langchain-anthropic \
+        langchain-openai
+
+COPY pegasus-ai/ /tmp/pegasus-ai/
+RUN pip install --no-cache-dir /tmp/pegasus-ai/ \
+    && rm -rf /tmp/pegasus-ai/
+
+# ── Stage 4: Config ──────────────────────────────────────────
+COPY pegasus-ai-workbench/config/jupyter_ai_config.py /etc/jupyter/jupyter_ai_config.py
+
+# Copy AI tools config (skills, agents, shared context) for PegasusAI
+COPY pegasus-ai-workbench/ai-tools/ /opt/pegasus-ai/ai-tools/
+
+# Install PegasusAI chat extension (SSE streaming chat + tool calling)
+COPY pegasus-ai-workbench/config/pegasus-ai-extension/ /tmp/pegasus-ai-extension/
+RUN pip install --no-cache-dir /tmp/pegasus-ai-extension/ \
+    && jupyter server extension enable pegasus_ai_extension --sys-prefix \
+    && rm -rf /tmp/pegasus-ai-extension/
+
+COPY pegasus-ai-workbench/scripts/configure-llm.sh /etc/profile.d/pegasus-ai-llm.sh
+COPY pegasus-ai-workbench/scripts/pegasus-ai-setup.sh /usr/local/bin/pegasus-ai-setup
+
+RUN chmod +x \
+        /etc/profile.d/pegasus-ai-llm.sh \
+        /usr/local/bin/pegasus-ai-setup
+
+# ── Switch to notebook user ──────────────────────────────────
+USER ${NB_UID}
+WORKDIR /home/${NB_USER}
+
+# Lite uses the default scipy-notebook entrypoint (start-notebook.py)
+CMD ["start-notebook.py", "--NotebookApp.token=''"]
