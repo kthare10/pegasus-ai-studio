@@ -1,0 +1,65 @@
+# Vouch Proxy config for PegasusAI Studio — CILogon OIDC, authenticate-only.
+#
+# Copy to auth/vouch/config.yaml and fill the REPLACE_* values.
+#   cp auth/vouch/config.yaml.example auth/vouch/config.yaml
+# Generate a JWT secret:  openssl rand -base64 33
+#
+# config.yaml is git-ignored (it holds secrets).
+
+vouch:
+    logLevel: info
+
+    # Authenticate-only: any successful CILogon login is allowed in.
+    # (To restrict later, add the FABRIC Core API role check at the proxy —
+    #  see the add-vouch-proxy skill.)
+    allowAllUsers: true
+
+    # CRITICAL: must be false. If true, vouch returns 200 for unauthenticated
+    # users and the gate effectively lets everyone through.
+    publicAccess: false
+
+    # NOTE: vouch requires EXACTLY ONE of `allowAllUsers` or `domains` (not
+    # both). For authenticate-only we use allowAllUsers (above) and set
+    # cookie.domain (below) so the callback host is covered.
+
+    jwt:
+        secret: REPLACE_WITH_RANDOM_44CHAR_BASE64   # openssl rand -base64 33
+
+    cookie:
+        name: pegasus-studio
+        secure: true
+        # The callback_url host MUST fall within this cookie domain.
+        #   Local: localhost     Prod: your host or its parent (e.g. example.org)
+        domain: localhost
+
+    headers:
+        jwt: X-Vouch-Token
+        querystring: access_token
+        redirect: X-Vouch-Requested-URI
+        claims:
+            - email
+            - name
+            - given_name
+            - family_name
+            - sub
+            - iss
+        idtoken: X-Vouch-IdP-IdToken
+        accesstoken: X-Vouch-IdP-AccessToken
+        refreshtoken: X-Vouch-IdP-RefreshToken
+
+oauth:
+    provider: oidc
+    client_id: REPLACE_WITH_CILOGON_CLIENT_ID
+    client_secret: REPLACE_WITH_CILOGON_CLIENT_SECRET
+    auth_url: https://cilogon.org/authorize
+    token_url: https://cilogon.org/oauth2/token
+    user_info_url: https://cilogon.org/oauth2/userinfo
+    scopes:
+        - openid
+        - email
+        - profile
+        - org.cilogon.userinfo
+    # Must EXACTLY match a redirect URI registered on the CILogon client.
+    # Local:  https://localhost:8443/auth   (matches the proxy port in docker-compose.auth.yml)
+    # Prod:   https://YOUR_HOST/auth
+    callback_url: https://localhost:8443/auth

@@ -1,0 +1,30 @@
+#!/command/with-contenv bash
+# Personal HTCondor daemon — runs as root
+
+# Create runtime directories
+mkdir -p /tmp/condor/{log,lock,run,spool,execute,cred}
+chmod 755 /tmp/condor/execute
+chmod 700 /tmp/condor/cred
+
+# The DEB HTCondor install drops privilege to the 'condor' user for daemon
+# file I/O, so the runtime dirs (LOG/LOCK/RUN/SPOOL/...) must be writable by
+# that user — otherwise condor_master dies with "Cannot open log file".
+# Harmless on the conda/arm64 path where no 'condor' user exists.
+if id condor >/dev/null 2>&1; then
+    chown -R condor:condor /tmp/condor
+fi
+
+# Find condor_master (DEB install)
+CONDOR_MASTER=/usr/sbin/condor_master
+if [ ! -x "$CONDOR_MASTER" ]; then
+    echo "[condor] condor_master not found at $CONDOR_MASTER — HTCondor daemons unavailable" >&2
+    echo "[condor] (the image must be built for linux/amd64 to get the HTCondor DEB)" >&2
+    # Sleep forever so s6 doesn't tight-loop restarting
+    exec sleep infinity
+fi
+
+# DEB install provides the system config
+export CONDOR_CONFIG=/etc/condor/condor_config
+
+echo "[condor] Starting personal HTCondor pool..."
+exec "$CONDOR_MASTER" -f

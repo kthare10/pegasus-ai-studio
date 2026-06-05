@@ -1,0 +1,47 @@
+# Personal HTCondor configuration for PegasusAI Studio container.
+# Single-node pool: master + schedd + startd all in one process.
+
+# Pool identity
+CONDOR_HOST = localhost
+COLLECTOR_HOST = $(CONDOR_HOST):0
+
+# Run all daemons in one condor_master
+DAEMON_LIST = MASTER, SCHEDD, STARTD, COLLECTOR, NEGOTIATOR
+
+# Allow the pegasus user to submit and manage jobs
+ALLOW_WRITE = *
+ALLOW_READ = *
+ALLOW_ADMINISTRATOR = $(FULL_HOSTNAME), localhost, 127.0.0.1
+ALLOW_OWNER = $(ALLOW_ADMINISTRATOR)
+
+# Security: trust local connections (we're in a container)
+SEC_DEFAULT_AUTHENTICATION = OPTIONAL
+SEC_DEFAULT_AUTHENTICATION_METHODS = FS, TRUST
+SEC_DEFAULT_INTEGRITY = OPTIONAL
+SEC_DEFAULT_ENCRYPTION = OPTIONAL
+
+# Resources: share what we have.
+# NUM_CPUS / MEMORY / DISK must be integer expressions — "auto" is NOT a valid
+# value and makes condor_startd abort. Leaving them unset lets HTCondor
+# auto-detect CPUs, memory (MB), and disk from the container at startup.
+
+# Startd: always run jobs (no preemption in a personal pool)
+START = TRUE
+SUSPEND = FALSE
+CONTINUE = TRUE
+PREEMPT = FALSE
+KILL = FALSE
+WANT_VACATE = FALSE
+WANT_SUSPEND = FALSE
+
+# Reduce resource usage
+UPDATE_INTERVAL = 60
+NEGOTIATOR_INTERVAL = 20
+
+# Log to stdout-friendly paths
+LOG = /tmp/condor/log
+LOCK = /tmp/condor/lock
+RUN = /tmp/condor/run
+SPOOL = /tmp/condor/spool
+EXECUTE = /tmp/condor/execute
+CRED_STORE_DIR = /tmp/condor/cred

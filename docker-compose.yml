@@ -1,0 +1,25 @@
+# PegasusAI Studio — plain (unauthenticated) single-container run.
+#
+# Equivalent to `make run`, but via Compose:
+#   docker compose up -d        # start, browse http://localhost:8888
+#   docker compose logs -f
+#   docker compose down
+#
+# For the CILogon-authenticated stack (adds an nginx+vouch front proxy), use:
+#   docker compose -f docker-compose.auth.yml up -d
+#
+# NOTE: the image is linux/amd64. On Apple Silicon it runs under Rosetta
+# emulation — build/UI/pegasus-plan work, but live Jupyter kernels need a
+# native amd64 host. `privileged` is required for Apptainer.
+
+services:
+  studio:
+    image: kthare10/pegasus-ai-studio:latest
+    platform: linux/amd64
+    privileged: true
+    env_file: .env
+    ports:
+      - "8888:80"
+    volumes:
+      - ./work:/home/pegasus/work
+    restart: unless-stopped

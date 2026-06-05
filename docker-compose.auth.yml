@@ -1,0 +1,62 @@
+# PegasusAI Studio — CILogon-authenticated stack (sidecar pattern).
+#
+#   Browser ──TLS──> proxy (nginx :443, auth_request) ──> studio (:80)
+#                      ├── /login /logout /auth /validate ──> vouch (:9090) ──> CILogon
+#                      └── everything else: require valid vouch cookie, then proxy to studio
+#
+# The studio container is NOT published — only the authenticating proxy is.
+# This mirrors the eventual GKE topology (ingress-nginx external-auth +
+# a vouch Deployment + the studio Deployment).
+#
+# Usage:
+#   docker compose -f docker-compose.auth.yml up -d
+#   docker compose -f docker-compose.auth.yml down
+#
+# Prerequisites (see auth/README.md):
+#   1. Register a CILogon OIDC client; fill auth/vouch/config.yaml
+#   2. ./auth/ssl/generate-self-signed.sh   (or drop real certs in auth/ssl/)
+#   3. open https://localhost:8443
+#
+# For plain (unauthenticated) local dev use docker-compose.yml or `make run`.
+
+services:
+  studio:
+    image: kthare10/pegasus-ai-studio:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
+    privileged: true            # required for Apptainer (user namespaces)
+    env_file: .env              # LLM provider config
+    volumes:
+      - ./work:/home/pegasus/work
+    expose:
+      - "80"                    # internal only — never published
+    networks: [studionet]
+    restart: unless-stopped
+
+  vouch:
+    image: fabrictestbed/vouch-proxy:0.27.1
+    volumes:
+      - ./auth/vouch:/config:ro
+    expose:
+      - "9090"
+    networks: [studionet]
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:stable
+    depends_on: [studio, vouch]
+    ports:
+      - "8443:443"              # browse https://localhost:8443
+    volumes:
+      - ./auth/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./auth/ssl:/etc/nginx/ssl:ro
+    networks: [studionet]
+    restart: unless-stopped
+
+networks:
+  studionet:
+    driver: bridge

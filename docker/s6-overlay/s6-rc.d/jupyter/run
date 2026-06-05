@@ -1,0 +1,7 @@
+#!/command/execlineb -P
+# JupyterLab — always-on service, started with the container (like the
+# official jupyter image). The studio frontend does NOT launch it; it only
+# opens the running instance at /jupyter/lab in a new browser tab.
+s6-setuidgid pegasus
+cd /home/pegasus/work
+exec jupyter lab --config=/etc/jupyter/jupyter_server_config.py

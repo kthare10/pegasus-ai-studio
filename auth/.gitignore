@@ -1,0 +1,4 @@
+# Secrets and certs — never commit
+vouch/config.yaml
+ssl/*.pem
+ssl/*.key
