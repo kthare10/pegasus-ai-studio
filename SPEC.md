@@ -80,6 +80,44 @@ to evolve into it.
 
 ## 4. V1 Architecture
 
+### 4.0 As-Built Deviations (current implementation)
+
+> This spec captures the original design. The shipped implementation diverged in
+> the following ways — treat this subsection as authoritative where it conflicts
+> with the rest of the document.
+
+- **Platform: `linux/amd64`.** The image is built for amd64. On Apple Silicon it
+  runs under Rosetta/QEMU emulation where everything works *except* live Jupyter
+  kernels (the `kernel_info` handshake stalls) — deploy on a native amd64 host.
+- **Base image / runtime:** `ubuntu:24.04` with a **single system Python 3.12
+  (no conda/Miniforge)**, **Pegasus WMS 5.1.2 + HTCondor** (DEB packages,
+  personal pool), **Apptainer 1.5** (for Singularity/`docker://` workflow jobs),
+  Node.js 20, and JupyterLab. `pegasus-plan` is pinned to system Python via
+  `PEGASUS_PYTHON`. (Not the `scipy-notebook`/conda base originally implied.)
+- **JupyterLab is an always-on s6 service**, not launched on demand. The
+  Notebooks nav item simply **opens it in a new browser tab** (`/jupyter/lab`),
+  not an embedded iframe. `routers/jupyter.py` is status-only (`/start` and
+  `/stop` are no-ops). **`jupyter-ai` and `jupyter-collaboration` are removed** —
+  their RTC/collaboration frontend extensions 403-loop behind the proxy and
+  break notebook loading; JupyterLab runs in classic (non-RTC) document mode.
+- **Workflow monitoring is JSONL-driven.** On submit, the studio auto-launches
+  `workflow-monitor --serve`, which emits `workflow-events.jsonl`; the studio
+  reads that file for status/jobs/stats (no direct stampede-DB queries in the
+  app). Jobs execute in Apptainer containers on the personal HTCondor pool.
+- **Workflow actions take auto-discovered parameters.** Generate / Plan / Submit
+  introspect each project's `workflow_generator.py` `argparse` at runtime
+  (`GET /api/workflows/projects/{id}/params`) and render a per-workflow form.
+- **Chat speaks both APIs.** The built-in chat supports OpenAI Chat-Completions
+  *and* the Responses API, auto-falling-back when an endpoint requires the latter.
+- **Authentication:** in addition to the "auth handled before the container"
+  model below, V1 ships an **optional CILogon sidecar** — `docker-compose.auth.yml`
+  puts an nginx `auth_request` proxy + `vouch-proxy` (CILogon OIDC) in front of
+  the studio. See [`auth/README.md`](auth/README.md). This maps cleanly to the
+  V2/GKE ingress-nginx external-auth model.
+- **Run modes:** `make run` or `docker compose up` (plain, `:8888`);
+  `docker compose -f docker-compose.auth.yml up` (CILogon, `:8443`).
+- **Workspace** is bind-mounted at `/home/pegasus/work` (not `/home/jovyan`).
+
 ### 4.1 Container Layout
 
 ```
@@ -208,14 +246,15 @@ log.info("tool_installed", tool_id="claude-code", duration_ms=4200)
 log.warning("jupyter_start_failed", error=str(e), port=8889)
 ```
 
-#### JupyterLab (on-demand, :8889)
+#### JupyterLab (always-on, :8889)
 
-Standard JupyterLab with jupyter-ai extension. **Not always running** — launched
-via `POST /api/jupyter/start` when the user navigates to the Notebooks view.
-Shares the same `~/work/` workspace so files are visible in both Studio and
-JupyterLab.
+> **As-built (see §4.0):** JupyterLab now runs as an **always-on s6 service**
+> started with the container — *not* an on-demand subprocess. It has **no
+> `jupyter-ai`** and runs in classic (non-RTC) mode. The Notebooks page just
+> opens it in a new tab; `routers/jupyter.py` only reports status. It shares the
+> `~/work/` workspace so files are visible in both Studio and JupyterLab.
 
-This follows the LoomAI pattern where JupyterLab is a managed subprocess:
+The original on-demand design (managed subprocess, mirroring LoomAI) was:
 
 ```python
 # studio_api/routers/jupyter.py (mirrors loomai-dev/backend/app/routes/jupyter.py)
@@ -958,6 +997,16 @@ CREATE TABLE chat_messages (
 
 Follows LoomAI's pattern: multi-stage build with Node.js frontend compilation
 and Python backend in a single production image.
+
+> **As-built (see §4.0):** the sketch below is the original plan and no longer
+> matches the shipped [`Dockerfile`](Dockerfile). The real image uses
+> `FROM ubuntu:24.04` (single system **Python 3.12, no conda**, not
+> `scipy-notebook`), installs **Pegasus + HTCondor from DEB packages** (not pip)
+> plus **Apptainer** and **`workflow-monitor`**, runs **JupyterLab as an
+> always-on s6 service with no `jupyter-ai`/`jupyter-collaboration`**, builds for
+> **`linux/amd64`**, and uses an `s6-rc.d/` service per process
+> (`nginx`, `studio-api`, `studio-web`, `jupyter`, `condor`). Refer to the actual
+> `Dockerfile` and `docker/` directory for the authoritative build.
 
 ```dockerfile
 # Stage 1: Build Next.js frontend (standalone output — no node_modules in prod)
