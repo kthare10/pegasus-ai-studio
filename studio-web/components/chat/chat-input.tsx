@@ -10,6 +10,15 @@ let _msgId = 0;
 export function ChatInput() {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-grow the textarea with content (3 rows min via rows=3, capped by
+  // max-h; shrinks back when cleared after send).
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 224)}px`;
+  }, [input]);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const addMessage = useChatStore((s) => s.addMessage);
   const appendToLast = useChatStore((s) => s.appendToLast);
@@ -197,15 +206,15 @@ export function ChatInput() {
         </div>
 
         {/* Input area */}
-        <div className="flex gap-2">
+        <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about Pegasus workflows... (Shift+Enter for newline)"
-            rows={1}
-            className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-pegasus-500 focus:ring-pegasus-500"
+            rows={3}
+            className="max-h-56 flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-pegasus-500 focus:ring-pegasus-500"
           />
           {isStreaming ? (
             <button

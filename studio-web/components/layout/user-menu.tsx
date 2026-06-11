@@ -40,9 +40,9 @@ export function UserMenu() {
     }
   }, [open]);
 
-  if (!email) return null;
-
-  const initial = email[0]?.toUpperCase() ?? "?";
+  // With no identity (plain single-user deployments) the menu still renders —
+  // Settings/Help moved here from the sidebar — just without the email chrome.
+  const initial = email ? email[0]?.toUpperCase() ?? "?" : "⚙";
 
   return (
     <div ref={menuRef} className="fixed right-4 top-2.5 z-50">
@@ -53,7 +53,9 @@ export function UserMenu() {
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pegasus-600 text-xs font-semibold text-white">
           {initial}
         </span>
-        <span className="max-w-[180px] truncate text-gray-700">{email}</span>
+        {email && (
+          <span className="max-w-[180px] truncate text-gray-700">{email}</span>
+        )}
         <svg
           width="12"
           height="12"
@@ -69,12 +71,14 @@ export function UserMenu() {
 
       {open && (
         <div className="absolute right-0 mt-1.5 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-          <div className="border-b border-gray-100 px-4 py-3">
-            <p className="text-xs text-gray-400">Signed in as</p>
-            <p className="truncate text-sm font-medium text-gray-800">
-              {email}
-            </p>
-          </div>
+          {email && (
+            <div className="border-b border-gray-100 px-4 py-3">
+              <p className="text-xs text-gray-400">Signed in as</p>
+              <p className="truncate text-sm font-medium text-gray-800">
+                {email}
+              </p>
+            </div>
+          )}
           <nav className="py-1 text-sm text-gray-700">
             <Link
               href="/settings"

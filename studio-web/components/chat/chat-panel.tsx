@@ -1,6 +1,7 @@
 "use client";
 
 import { useChatStore, type ChatMsg } from "@/lib/stores/chat-store";
+import { PegasusLogo } from "@/components/ui/pegasus-logo";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,9 @@ export function ChatPanel() {
       {messages.length === 0 ? (
         <div className="flex h-full items-center justify-center">
           <div className="text-center text-gray-400">
+            <div className="mb-3 flex justify-center">
+              <PegasusLogo size={48} />
+            </div>
             <p className="text-lg">Welcome to PegasusAI Chat</p>
             <p className="mt-1 text-sm">
               Ask me to create, debug, or review Pegasus workflows.
@@ -45,6 +49,11 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+      {!isUser && (
+        <div className="mr-2 mt-1 shrink-0">
+          <PegasusLogo size={24} />
+        </div>
+      )}
       <div
         className={cn(
           "max-w-[80%] rounded-lg px-4 py-3 text-sm",

@@ -2,6 +2,7 @@
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ChatInput } from "@/components/chat/chat-input";
+import { PegasusLogo } from "@/components/ui/pegasus-logo";
 import { useChatStore } from "@/lib/stores/chat-store";
 import { useEffect } from "react";
 import * as api from "@/lib/api/client";
@@ -33,7 +34,10 @@ export function ChatSidebar({ onClose }: ChatSidebarProps) {
     <div className="flex w-[400px] flex-col border-l border-gray-200 bg-white">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-gray-900">Chat</h2>
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+          <PegasusLogo size={20} />
+          PegasusAI Chat
+        </h2>
         <button
           onClick={onClose}
           className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
