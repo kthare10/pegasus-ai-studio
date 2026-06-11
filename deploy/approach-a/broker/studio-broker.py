@@ -12,8 +12,10 @@ backend. A flock serializes concurrent first requests from the same browser.
 import fcntl
 import pwd
 import re
+import socket
 import subprocess
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 CONF_DIR = "/etc/pegasus-studio"
@@ -22,6 +24,46 @@ ADD_USER = "/opt/pegasus-studio/bin/add-user.sh"
 LOCK_FILE = "/run/studio-broker.lock"
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+
+def user_port(username: str) -> int | None:
+    try:
+        with open(f"{CONF_DIR}/users/{username}.env") as f:
+            for line in f:
+                if line.startswith("STUDIO_PORT="):
+                    return int(line.split("=", 1)[1])
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def port_open(port: int) -> bool:
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def ensure_started(username: str) -> bool:
+    """Start the user's session units if stopped (wake-on-demand after the
+    reaper, or after a host reboot). Returns True once the API answers."""
+    started = False
+    for unit in (f"studio-api@{username}", f"jupyter@{username}"):
+        active = subprocess.run(
+            ["systemctl", "is-active", "--quiet", unit], check=False
+        )
+        if active.returncode != 0:
+            subprocess.run(["systemctl", "start", unit], check=False, timeout=60)
+            started = True
+    port = user_port(username)
+    if port is None:
+        return False
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        if port_open(port):
+            return True
+        time.sleep(0.5)
+    log(f"wake timeout: {username} port {port} never opened (started={started})")
+    return False
 
 
 def log(msg: str) -> None:
@@ -83,8 +125,14 @@ class Handler(BaseHTTPRequestHandler):
             fcntl.flock(lock, fcntl.LOCK_EX)
             mapping = read_identity_map()
             if email in mapping:
-                # Mapping exists but nginx routed here: stale maps — reload.
-                log(f"reload-only: {email} -> {mapping[email]}")
+                # Known identity but the request landed here: either the
+                # user's units are stopped (reaped / host reboot) or nginx's
+                # maps are stale. Wake first; reload covers the rest.
+                username = mapping[email]
+                log(f"wake: {email} -> {username}")
+                if not ensure_started(username):
+                    self.send_error(503, "workspace failed to start")
+                    return
                 subprocess.run(["systemctl", "reload", "nginx"], check=False)
             else:
                 username = derive_username(email)

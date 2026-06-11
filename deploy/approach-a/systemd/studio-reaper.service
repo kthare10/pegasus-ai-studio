@@ -1,0 +1,6 @@
+[Unit]
+Description=PegasusAI Studio session reaper (workflow-aware idle stop)
+
+[Service]
+Type=oneshot
+ExecStart=/opt/pegasus-studio/bin/studio-reaper.sh

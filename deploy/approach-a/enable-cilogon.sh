@@ -49,14 +49,21 @@ if grep -q "REPLACE_WITH_RANDOM" "$VOUCH_CFG"; then
 fi
 sed -i "s|REPLACE_DNS_NAME|$DNS_NAME|g" "$VOUCH_CFG"
 
-echo "==> Broker + add-user.sh -> /opt/pegasus-studio/bin"
+echo "==> Broker + add-user.sh + reaper -> /opt/pegasus-studio/bin"
 install -d /opt/pegasus-studio/bin
 install -m 755 "$SCRIPT_DIR/broker/studio-broker.py" /opt/pegasus-studio/bin/
 install -m 755 "$SCRIPT_DIR/add-user.sh" /opt/pegasus-studio/bin/
+install -m 755 "$SCRIPT_DIR/reaper/studio-reaper.sh" /opt/pegasus-studio/bin/
 
 echo "==> Landing page -> /opt/pegasus-studio/landing"
 install -d /opt/pegasus-studio/landing
 install -m 644 "$SCRIPT_DIR/landing/index.html" /opt/pegasus-studio/landing/
+
+# Older configs: add the session-lifetime cap if missing (minutes)
+if ! grep -q "maxAge" "$VOUCH_CFG"; then
+    sed -i "/^    jwt:/a\\
+        maxAge: 480" "$VOUCH_CFG"
+fi
 
 # Older configs (pre-logout): add the post_logout whitelist if missing
 if ! grep -q "post_logout_redirect_uris" "$VOUCH_CFG"; then
@@ -70,8 +77,11 @@ fi
 echo "==> Services"
 cp "$SCRIPT_DIR/systemd/vouch.service" /etc/systemd/system/
 cp "$SCRIPT_DIR/systemd/studio-broker.service" /etc/systemd/system/
+cp "$SCRIPT_DIR/systemd/studio-reaper.service" /etc/systemd/system/
+cp "$SCRIPT_DIR/systemd/studio-reaper.timer" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable vouch studio-broker >/dev/null 2>&1
+systemctl enable --now studio-reaper.timer >/dev/null 2>&1
 systemctl restart vouch studio-broker   # restart picks up config changes on re-runs
 sleep 3
 systemctl is-active --quiet vouch || {
@@ -81,6 +91,7 @@ systemctl is-active --quiet vouch || {
 
 echo "==> nginx cutover"
 touch "$CONF_DIR/identity.map"
+cp "$SCRIPT_DIR/nginx/studio-logformat.conf" /etc/nginx/conf.d/studio-logformat.conf
 cp "$SCRIPT_DIR/nginx/studio-cilogon.conf" /etc/nginx/sites-available/studio-cilogon.conf
 # Use the Let's Encrypt cert when present
 if [ -d "/etc/letsencrypt/live/$DNS_NAME" ]; then

@@ -143,6 +143,36 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     prune_task = asyncio.create_task(_prune_terminals())
 
+    # Resume monitoring for workflows that are still running: workflow-monitor
+    # processes die with this unit's cgroup, but the workflows themselves run
+    # under HTCondor and keep going — re-arm their JSONL monitors on boot so
+    # stopping/starting a user's studio never loses dashboard state.
+    import time
+
+    async def _resume_monitors() -> None:
+        from services.workflow_scanner import discover_runs
+        from services.workflow_submitter import _start_monitor
+
+        try:
+            for run in discover_runs():
+                if run.get("status") != "running":
+                    continue
+                run_dir = run["run_dir"]
+                events = os.path.join(run_dir, "workflow-events.jsonl")
+                try:
+                    # A live monitor refreshes the file continuously; a fresh
+                    # mtime means one is already attached to this run.
+                    fresh = time.time() - os.path.getmtime(events) < 60
+                except OSError:
+                    fresh = False
+                if not fresh:
+                    log.info("workflow_monitor_resumed", run_dir=run_dir)
+                    await _start_monitor(run_dir)
+        except Exception as e:
+            log.warning("monitor_rescan_failed", error=str(e))
+
+    asyncio.create_task(_resume_monitors())
+
     yield
     # Cleanup terminal sessions and running tool processes
     prune_task.cancel()

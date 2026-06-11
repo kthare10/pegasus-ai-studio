@@ -28,6 +28,9 @@ vouch:
 
     jwt:
         secret: REPLACE_WITH_RANDOM_44CHAR_BASE64   # auto-filled by enable-cilogon.sh
+        # Browser session lifetime in MINUTES — after this, the user is
+        # bounced back through CILogon. (The cookie inherits this maxAge.)
+        maxAge: 480
 
     cookie:
         name: pegasus-studio

@@ -140,13 +140,29 @@ sudo deploy/approach-a/enable-cilogon.sh --rollback
 Pre-mapping a specific identity to a chosen username (instead of the
 auto-derived one): `sudo add-user.sh --email alice@example.org alice`.
 
+## Session lifecycle & resource management
+
+Per-user services are reclaimed when idle and resurrected on demand — running
+workflows are never affected (DAGMan/monitord live under `condor.service`, and
+studio-api re-arms `workflow-monitor` JSONL feeds on startup):
+
+- **Reaper** (`studio-reaper.timer`, every 15 min): stops `jupyter@user` after
+  `JUPYTER_IDLE_HOURS` (default 2) of Jupyter inactivity, and `studio-api@user`
+  after `API_IDLE_HOURS` (default 8) with no gateway activity
+  (`/var/log/nginx/studio-activity.log`), no attached terminals, and an empty
+  `condor_q` for the user. Dry run: `studio-reaper.sh -n`.
+- **Wake-on-demand**: a request hitting a stopped backend 502s into the
+  onboarding broker, which starts the units and redirects back (~3 s).
+- **Browser session timeout**: vouch `jwt.maxAge` (480 min default) forces
+  CILogon re-login; Sign out is immediate via the user menu.
+- **Caps**: per-unit `MemoryMax`/`CPUQuota` in the templates; for an
+  account-wide cap use `systemctl set-property user-<uid>.slice MemoryMax=6G`
+  (does not constrain the user's workflows — those run under condor).
+
 ## Phase 2 leftovers
 
-- **Workflow-aware idle stop**: stop `studio-api@user`/`jupyter@user` when idle
-  **and** `condor_q -submitter user` is empty (units are cheap, so this is an
-  optimization, not a need).
-- **Fair-share**: per-user Condor accounting groups; per-user systemd
-  `MemoryMax`/`CPUQuota` are already in the template unit.
+- **Fair-share**: per-user Condor accounting groups (per-user systemd caps
+  already exist, see above).
 
 ## Caveats
 
