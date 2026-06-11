@@ -113,6 +113,7 @@ Jobs run in **Apptainer/Singularity** containers (e.g. `docker://python:3.11-sli
 |------|-----------|-----|
 | `docker-compose.yml` | Studio only (no auth) — `make run` equivalent | `http://localhost:8888` |
 | `docker-compose.auth.yml` | Studio + **nginx auth proxy** + **vouch-proxy** (CILogon OIDC). Studio is not published; only the proxy is. | `https://localhost:8443` |
+| `deploy/approach-a/` | **Multi-user shared submit host** (no containers) — one studio-api + JupyterLab per Unix user behind an authenticating TLS gateway, submitting to a shared HTCondor pool. Includes rootless podman for users and Let's Encrypt automation. See [`deploy/approach-a/README.md`](deploy/approach-a/README.md). | `https://<dns-name>/` |
 
 The auth stack maps cleanly to GKE later (ingress-nginx external-auth + a vouch Deployment) — see [`auth/README.md`](auth/README.md).
 

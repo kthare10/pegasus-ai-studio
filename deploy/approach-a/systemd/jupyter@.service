@@ -1,0 +1,27 @@
+[Unit]
+Description=JupyterLab for %i
+After=network.target
+
+[Service]
+User=%i
+Group=%i
+Environment=HOME=/home/%i
+EnvironmentFile=/etc/pegasus-studio/users/%i.env
+WorkingDirectory=/home/%i
+ExecStartPre=/usr/bin/install -d /home/%i/work
+# Token/password disabled: nginx (TLS + basic auth + per-user routing) fronts
+# this server, and it binds to 127.0.0.1 only.
+ExecStart=/opt/pegasus-studio/jupyter/.venv/bin/jupyter-lab \
+    --no-browser \
+    --ip=127.0.0.1 \
+    --port=${STUDIO_JUPYTER_PORT} \
+    --ServerApp.base_url=/jupyter/ \
+    --IdentityProvider.token= \
+    --ServerApp.password= \
+    --ServerApp.root_dir=/home/%i/work
+Restart=on-failure
+RestartSec=3
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

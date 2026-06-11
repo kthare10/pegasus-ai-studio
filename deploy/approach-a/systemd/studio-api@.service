@@ -1,0 +1,21 @@
+[Unit]
+Description=PegasusAI Studio API for %i
+After=network.target condor.service
+
+[Service]
+User=%i
+Group=%i
+Environment=HOME=/home/%i
+EnvironmentFile=/etc/pegasus-studio/users/%i.env
+WorkingDirectory=/opt/pegasus-studio/api
+ExecStartPre=/usr/bin/install -d /home/%i/work /home/%i/work/.studio
+ExecStart=/opt/pegasus-studio/api/.venv/bin/uvicorn main:app --host 127.0.0.1 --port ${STUDIO_PORT}
+Restart=on-failure
+RestartSec=3
+
+# Per-user resource limits (tune as needed)
+MemoryMax=4G
+CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target
