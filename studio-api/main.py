@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 import logging_config as _  # noqa: F401 — triggers configure_logging()
@@ -125,8 +125,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         log.warning("reconcile_error", error=str(e))
 
+    # Periodically reap terminal sessions nobody has been attached to for a
+    # long time (shells survive reloads, not abandonment).
+    import asyncio
+    import os
+
+    from services import terminal_sessions
+
+    idle_secs = int(os.environ.get("STUDIO_TERMINAL_IDLE_SECONDS", "86400"))
+
+    async def _prune_terminals() -> None:
+        while True:
+            await asyncio.sleep(3600)
+            killed = terminal_sessions.prune_idle(idle_secs)
+            if killed:
+                log.info("terminal_sessions_pruned", count=killed)
+
+    prune_task = asyncio.create_task(_prune_terminals())
+
     yield
-    # Cleanup running tool processes
+    # Cleanup terminal sessions and running tool processes
+    prune_task.cancel()
+    for s in terminal_sessions.list_sessions():
+        terminal_sessions.kill(s["id"])
     from services.process_mgr import process_manager
 
     await process_manager.cleanup_all()
@@ -162,3 +183,18 @@ app.include_router(terminal.router)
 app.include_router(ai_terminal.router)
 app.include_router(workflows.router)
 app.include_router(chat.router)
+
+
+@app.get("/api/whoami")
+async def whoami(request: Request) -> dict:
+    """Authenticated identity for the UI's user menu.
+
+    The gateway injects X-Auth-User (CILogon email, or the basic-auth
+    username); the unix account is who this per-user backend runs as. In the
+    plain single-user container neither implies a real identity — the frontend
+    hides identity UI when `email` is null.
+    """
+    import getpass
+
+    email = request.headers.get("x-auth-user", "").strip()
+    return {"email": email or None, "user": getpass.getuser()}
