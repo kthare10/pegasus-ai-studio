@@ -29,7 +29,7 @@ condor_version | head -1
 echo "==> System packages"
 # Tolerate unrelated broken third-party repos (e.g. stale GPG keys)
 apt-get update -q || echo "WARNING: apt-get update reported errors; continuing with available repos"
-apt-get install -y -q nginx apache2-utils python3-venv python3-pip rsync curl
+apt-get install -y -q nginx apache2-utils python3-venv python3-pip rsync curl graphviz
 
 echo "==> Podman (rootless containers; docker CLI shim)"
 apt-get install -y -q podman podman-docker uidmap slirp4netns

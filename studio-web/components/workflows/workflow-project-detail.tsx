@@ -11,6 +11,7 @@ import {
   useAnalyzeWorkflow,
 } from "@/lib/hooks/use-workflows";
 import type { WorkflowParam } from "@/lib/api/client";
+import { DagViewer } from "@/components/workflows/dag-viewer";
 import { cn, statusColor } from "@/lib/utils";
 
 interface Props {
@@ -45,6 +46,11 @@ export function WorkflowProjectDetail({ projectId }: Props) {
   const [output, setOutput] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [values, setValues] = useState<ParamValues>({});
+  const [dag, setDag] = useState<{
+    url: string;
+    title: string;
+    live: boolean;
+  } | null>(null);
 
   const genParams = useMemo(
     () => params?.generator.params ?? [],
@@ -240,6 +246,18 @@ export function WorkflowProjectDetail({ projectId }: Props) {
                 >
                   {submit.isPending ? "Submitting..." : "Submit"}
                 </button>
+                <button
+                  onClick={() =>
+                    setDag({
+                      url: `/api/workflows/projects/${projectId}/graph.json`,
+                      title: `${project.name} — workflow DAG`,
+                      live: false,
+                    })
+                  }
+                  className="rounded-md border border-pegasus-300 bg-white px-4 py-2 text-sm text-pegasus-700 hover:bg-pegasus-50"
+                >
+                  Visualize DAG
+                </button>
               </>
             )}
           </div>
@@ -281,13 +299,29 @@ export function WorkflowProjectDetail({ projectId }: Props) {
                       <span className="font-mono text-sm text-gray-700">
                         {run.run_id.slice(0, 12)}...
                       </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                          statusColor(run.status)
-                        )}
-                      >
-                        {run.status}
+                      <span className="flex items-center gap-2">
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDag({
+                              url: `/api/workflows/${run.run_id}/graph.json`,
+                              title: `Run ${run.run_id.slice(0, 12)} — DAG`,
+                              live: true,
+                            });
+                          }}
+                          title="Visualize the planned DAG"
+                          className="cursor-pointer rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:border-pegasus-400 hover:text-pegasus-700"
+                        >
+                          DAG
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-medium",
+                            statusColor(run.status)
+                          )}
+                        >
+                          {run.status}
+                        </span>
                       </span>
                     </div>
                   </button>
@@ -300,6 +334,15 @@ export function WorkflowProjectDetail({ projectId }: Props) {
           </div>
         )}
       </div>
+
+      {dag && (
+        <DagViewer
+          graphUrl={dag.url}
+          title={dag.title}
+          live={dag.live}
+          onClose={() => setDag(null)}
+        />
+      )}
     </div>
   );
 }
