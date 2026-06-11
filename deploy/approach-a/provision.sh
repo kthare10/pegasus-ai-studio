@@ -69,6 +69,11 @@ rsync -a .next/static/ "$INSTALL_DIR/web/.next/static/"
 rsync -a public/ "$INSTALL_DIR/web/public/"
 id studio-web &>/dev/null || useradd -r -s /usr/sbin/nologin -d /nonexistent studio-web
 chown -R studio-web:studio-web "$INSTALL_DIR/web"
+# Running under sudo leaves root-owned build artifacts (.next, node_modules)
+# in the checkout, which breaks later rebuilds as the normal user — hand back.
+if [ -n "${SUDO_USER:-}" ]; then
+    chown -R "$SUDO_USER:$SUDO_USER" "$REPO_DIR/studio-web"
+fi
 
 echo "==> JupyterLab (shared venv; per-user jupyter@<user> units)"
 if [ ! -x "$INSTALL_DIR/jupyter/.venv/bin/jupyter-lab" ]; then
