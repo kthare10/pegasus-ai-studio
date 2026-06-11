@@ -14,6 +14,11 @@ vouch:
     listen: 127.0.0.1
     port: 9090
 
+    # Allowed ?url= targets for /logout (Sign out lands on the welcome page)
+    post_logout_redirect_uris:
+        - https://REPLACE_DNS_NAME/welcome
+        - https://cilogon.org/logout
+
     # Authenticate-only: any successful CILogon login is allowed in. The
     # onboarding broker then auto-provisions a workspace for new identities.
     allowAllUsers: true

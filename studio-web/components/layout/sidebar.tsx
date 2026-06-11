@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { usePanelStore } from "@/lib/stores/panel-store";
 
@@ -25,6 +26,15 @@ export function Sidebar() {
   const terminalOpen = usePanelStore((s) => s.terminalOpen);
   const toggleChat = usePanelStore((s) => s.toggleChat);
   const toggleTerminal = usePanelStore((s) => s.toggleTerminal);
+
+  // Auth-gated deployments proxy /logout to the auth layer (vouch); plain
+  // deployments have no such route and Next.js 404s — hide Sign out there.
+  const [canSignOut, setCanSignOut] = useState(false);
+  useEffect(() => {
+    fetch("/logout", { method: "HEAD", redirect: "manual" })
+      .then((r) => setCanSignOut(r.status !== 404))
+      .catch(() => setCanSignOut(false));
+  }, []);
 
   return (
     <aside className="flex w-56 flex-col border-r border-gray-200 bg-white">
@@ -132,8 +142,21 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 p-3 text-xs text-gray-400">
-        v0.1.0
+      <div className="flex items-center justify-between border-t border-gray-200 p-3 text-xs text-gray-400">
+        <span>v0.1.0</span>
+        {canSignOut && (
+          <a
+            href="/logout"
+            onClick={(e) => {
+              e.preventDefault();
+              // Land on the public welcome page after the session is cleared
+              window.location.href = `/logout?url=${window.location.origin}/welcome`;
+            }}
+            className="rounded px-2 py-1 font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            Sign out
+          </a>
+        )}
       </div>
     </aside>
   );

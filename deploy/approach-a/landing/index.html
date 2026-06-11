@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PegasusAI Studio</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 60%, #155e75 100%);
+    color: #e2e8f0; padding: 2rem;
+  }
+  .card { max-width: 640px; text-align: center; }
+  h1 { font-size: 2.6rem; font-weight: 700; color: #fff; }
+  h1 .accent { color: #67e8f9; }
+  .tagline { margin: 0.8rem 0 2rem; font-size: 1.15rem; color: #94a3b8; line-height: 1.5; }
+  .features {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.8rem; margin-bottom: 2.4rem; text-align: left;
+  }
+  .feature {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 0.9rem;
+  }
+  .feature b { display: block; color: #fff; font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .feature span { font-size: 0.8rem; color: #94a3b8; line-height: 1.4; }
+  .signin {
+    display: inline-block; background: #0891b2; color: #fff; font-size: 1.05rem;
+    font-weight: 600; padding: 0.85rem 2.2rem; border-radius: 10px;
+    text-decoration: none; transition: background 0.15s;
+  }
+  .signin:hover { background: #06b6d4; }
+  .hint { margin-top: 1rem; font-size: 0.8rem; color: #64748b; }
+  .footer { margin-top: 2.5rem; font-size: 0.75rem; color: #475569; }
+  .footer a { color: #64748b; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Pegasus<span class="accent">AI</span> Studio</h1>
+    <p class="tagline">
+      AI-powered scientific workflow development for Pegasus WMS —
+      author, plan, submit, and monitor workflows on an HTCondor pool,
+      with AI assistants at your side.
+    </p>
+    <div class="features">
+      <div class="feature"><b>📊 Workflow Dashboard</b>
+        <span>Real-time runs, jobs, and diagnostics</span></div>
+      <div class="feature"><b>🤖 AI Workbench</b>
+        <span>Claude Code, Codex, OpenCode &amp; built-in chat</span></div>
+      <div class="feature"><b>📓 Notebooks</b>
+        <span>Your own JupyterLab, one click away</span></div>
+      <div class="feature"><b>🚀 Personal Workspace</b>
+        <span>Auto-created on first login, yours alone</span></div>
+    </div>
+    <a class="signin" id="signin" href="/login?url=/">Sign in with CILogon</a>
+    <p class="hint">Use your institutional identity. New here? Your workspace
+      is created automatically on first sign-in.</p>
+    <p class="footer">
+      Powered by <a href="https://pegasus.isi.edu/">Pegasus WMS</a> · HTCondor · Apache 2.0
+    </p>
+  </main>
+  <script>
+    // Return the user to where they were headed (set by the 401 redirect),
+    // defaulting to the studio root.
+    var params = new URLSearchParams(window.location.search);
+    var target = params.get("url") || window.location.origin + "/";
+    // Same-origin targets only — don't let ?url= become an open redirect.
+    try {
+      if (new URL(target, window.location.origin).origin !== window.location.origin) {
+        target = window.location.origin + "/";
+      }
+    } catch (e) { target = window.location.origin + "/"; }
+    document.getElementById("signin").href = "/login?url=" + encodeURIComponent(target);
+  </script>
+</body>
+</html>

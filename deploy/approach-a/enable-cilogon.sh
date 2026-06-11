@@ -54,11 +54,25 @@ install -d /opt/pegasus-studio/bin
 install -m 755 "$SCRIPT_DIR/broker/studio-broker.py" /opt/pegasus-studio/bin/
 install -m 755 "$SCRIPT_DIR/add-user.sh" /opt/pegasus-studio/bin/
 
+echo "==> Landing page -> /opt/pegasus-studio/landing"
+install -d /opt/pegasus-studio/landing
+install -m 644 "$SCRIPT_DIR/landing/index.html" /opt/pegasus-studio/landing/
+
+# Older configs (pre-logout): add the post_logout whitelist if missing
+if ! grep -q "post_logout_redirect_uris" "$VOUCH_CFG"; then
+    sed -i "/^    port: 9090/a\\
+\\
+    post_logout_redirect_uris:\\
+        - https://$DNS_NAME/welcome\\
+        - https://cilogon.org/logout" "$VOUCH_CFG"
+fi
+
 echo "==> Services"
 cp "$SCRIPT_DIR/systemd/vouch.service" /etc/systemd/system/
 cp "$SCRIPT_DIR/systemd/studio-broker.service" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now vouch studio-broker
+systemctl enable vouch studio-broker >/dev/null 2>&1
+systemctl restart vouch studio-broker   # restart picks up config changes on re-runs
 sleep 3
 systemctl is-active --quiet vouch || {
     echo "ERROR: vouch failed to start — journalctl -u vouch" >&2
