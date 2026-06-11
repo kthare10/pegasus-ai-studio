@@ -8,6 +8,7 @@ frontend opens the running instance at /jupyter/lab in a new browser tab.
 
 from __future__ import annotations
 
+import os
 import socket
 
 import structlog
@@ -19,7 +20,9 @@ log = structlog.get_logger()
 
 router = APIRouter(prefix="/api/jupyter", tags=["jupyter"])
 
-_JUPYTER_PORT = 8889
+# 8889 is the in-container s6 service; multi-user host deployments run one
+# JupyterLab per user (deploy/approach-a) and pass the port via env.
+_JUPYTER_PORT = int(os.environ.get("STUDIO_JUPYTER_PORT", "8889"))
 
 
 def _port_in_use(port: int = _JUPYTER_PORT) -> bool:
