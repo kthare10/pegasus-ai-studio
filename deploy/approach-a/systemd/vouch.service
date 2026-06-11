@@ -6,7 +6,10 @@ Wants=network-online.target
 [Service]
 # Config (with secrets) lives in /etc/pegasus-studio/vouch/config.yaml
 ExecStartPre=-/usr/bin/podman pull quay.io/vouch/vouch-proxy:latest
-ExecStart=/usr/bin/podman run --rm --name vouch --network host \
+# --user 0: the image's default user (uid 999) cannot read the root-owned
+# 600 config mounted from the host; with rootful podman, container root maps
+# to host root, so the secret needs no host-side permission loosening.
+ExecStart=/usr/bin/podman run --rm --name vouch --network host --user 0:0 \
     -v /etc/pegasus-studio/vouch:/config:ro \
     quay.io/vouch/vouch-proxy:latest
 ExecStop=/usr/bin/podman stop -t 5 vouch
