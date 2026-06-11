@@ -58,6 +58,9 @@ chmod -R a+rX "$INSTALL_DIR/api"
 
 echo "==> studio-web build (Next.js standalone)"
 cd "$REPO_DIR/studio-web"
+# Telemetry must be off: its exit-time flush can hang `next build` forever on
+# hosts with restricted/odd egress (observed on FABRIC slices).
+export NEXT_TELEMETRY_DISABLED=1
 npm ci
 npm run build
 mkdir -p "$INSTALL_DIR/web"
