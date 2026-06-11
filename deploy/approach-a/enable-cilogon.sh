@@ -35,7 +35,9 @@ DNS_NAME="${1:?usage: $0 <dns-name>}"
     echo "       and fill in the CILogon client id/secret." >&2
     exit 1
 }
-if grep -q "REPLACE_WITH_CILOGON" "$VOUCH_CFG"; then
+# Only non-comment lines count — the template's own comments mention the
+# placeholder names.
+if grep -v '^\s*#' "$VOUCH_CFG" | grep -q "REPLACE_WITH_CILOGON"; then
     echo "ERROR: $VOUCH_CFG still has REPLACE_WITH_CILOGON_* placeholders." >&2
     exit 1
 fi
