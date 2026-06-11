@@ -112,15 +112,39 @@ condor_q                       # → "Total for alice: ..." (Owner = alice)
 sudo -u bob ls /home/alice     # → Permission denied (homes are 0750)
 ```
 
-## Phase 1 → Phase 2 path
+## CILogon + automatic user creation
 
-- **Auth → CILogon**: replace `auth_basic` with `auth_request` → vouch-proxy
-  (reuse `auth/` at repo root). The nginx map keys on the vouch user header
-  instead of `$remote_user`; everything else is identical.
-- **Dynamic lifecycle**: a small session broker (root) that auto-provisions
-  accounts on first CILogon login and stops `studio-api@user` when idle **and**
-  `condor_q -submitter user` is empty. Until then, units run continuously
-  (they're ~50 MB each).
+Federated login with first-visit auto-provisioning (no admin step per user):
+nginx `auth_request` → vouch-proxy → CILogon. The authenticated email maps to
+a unix account via `/etc/pegasus-studio/identity.map`; identities with no
+account yet are routed to a small **onboarding broker** (`:9095`, root) that
+derives a username from the email, runs `add-user.sh --email`, and redirects
+back — the user lands in their freshly created workspace.
+
+```bash
+# 1. Register a CILogon OIDC client (https://cilogon.org/oauth2/register)
+#    callback: https://<dns-name>/auth   scopes: openid email profile
+
+# 2. Put the secrets in place (this file is never committed):
+sudo mkdir -p /etc/pegasus-studio/vouch
+sudo cp deploy/approach-a/vouch/config.yaml.example /etc/pegasus-studio/vouch/config.yaml
+sudo vi /etc/pegasus-studio/vouch/config.yaml   # paste client_id + client_secret
+
+# 3. Cut over (starts vouch + broker, swaps the nginx site):
+sudo deploy/approach-a/enable-cilogon.sh <dns-name>
+
+# Rollback to basic auth at any time:
+sudo deploy/approach-a/enable-cilogon.sh --rollback
+```
+
+Pre-mapping a specific identity to a chosen username (instead of the
+auto-derived one): `sudo add-user.sh --email alice@example.org alice`.
+
+## Phase 2 leftovers
+
+- **Workflow-aware idle stop**: stop `studio-api@user`/`jupyter@user` when idle
+  **and** `condor_q -submitter user` is empty (units are cheap, so this is an
+  optimization, not a need).
 - **Fair-share**: per-user Condor accounting groups; per-user systemd
   `MemoryMax`/`CPUQuota` are already in the template unit.
 

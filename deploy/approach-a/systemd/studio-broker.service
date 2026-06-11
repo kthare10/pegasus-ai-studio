@@ -1,0 +1,12 @@
+[Unit]
+Description=PegasusAI Studio onboarding broker (auto user creation)
+After=network.target
+
+[Service]
+# Root: it runs add-user.sh (useradd, systemctl, nginx reload).
+ExecStart=/usr/bin/python3 /opt/pegasus-studio/bin/studio-broker.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

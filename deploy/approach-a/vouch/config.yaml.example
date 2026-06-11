@@ -1,0 +1,55 @@
+# Vouch Proxy config for PegasusAI Studio (Approach A host deployment).
+#
+# Where to put this (holds secrets — never commit the filled-in copy):
+#   sudo mkdir -p /etc/pegasus-studio/vouch
+#   sudo cp deploy/approach-a/vouch/config.yaml.example /etc/pegasus-studio/vouch/config.yaml
+#   sudo chmod 600 /etc/pegasus-studio/vouch/config.yaml
+#   sudo vi /etc/pegasus-studio/vouch/config.yaml   # paste CILogon client id/secret
+#
+# REPLACE_DNS_NAME and the JWT secret are filled automatically by
+# enable-cilogon.sh; only the two REPLACE_WITH_CILOGON_* values are yours.
+
+vouch:
+    logLevel: info
+    listen: 127.0.0.1
+    port: 9090
+
+    # Authenticate-only: any successful CILogon login is allowed in. The
+    # onboarding broker then auto-provisions a workspace for new identities.
+    allowAllUsers: true
+
+    # CRITICAL: must be false, or the gate lets everyone through.
+    publicAccess: false
+
+    jwt:
+        secret: REPLACE_WITH_RANDOM_44CHAR_BASE64   # auto-filled by enable-cilogon.sh
+
+    cookie:
+        name: pegasus-studio
+        secure: true
+        domain: REPLACE_DNS_NAME
+
+    headers:
+        jwt: X-Vouch-Token
+        querystring: access_token
+        redirect: X-Vouch-Requested-URI
+        claims:
+            - email
+            - name
+            - sub
+            - iss
+
+oauth:
+    provider: oidc
+    client_id: REPLACE_WITH_CILOGON_CLIENT_ID
+    client_secret: REPLACE_WITH_CILOGON_CLIENT_SECRET
+    auth_url: https://cilogon.org/authorize
+    token_url: https://cilogon.org/oauth2/token
+    user_info_url: https://cilogon.org/oauth2/userinfo
+    scopes:
+        - openid
+        - email
+        - profile
+        - org.cilogon.userinfo
+    # Must EXACTLY match a redirect URI registered on the CILogon client.
+    callback_url: https://REPLACE_DNS_NAME/auth

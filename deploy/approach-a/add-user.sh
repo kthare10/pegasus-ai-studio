@@ -3,15 +3,22 @@
 # Creates the Unix account, assigns a backend port, sets the login password
 # (htpasswd), starts studio-api@<user>, and adds the nginx route.
 #
-# Usage: sudo ./add-user.sh <username> [password]
-#   With no password argument, htpasswd prompts interactively.
+# Usage:
+#   sudo ./add-user.sh <username> [password]          basic-auth mode
+#   sudo ./add-user.sh --email <email> <username>     CILogon mode (no htpasswd;
+#                                                     writes identity.map)
 set -euo pipefail
 
 if [ "$(id -u)" -ne 0 ]; then
-    echo "Run as root (sudo $0 <username> [password])" >&2
+    echo "Run as root (sudo $0 [--email <email>] <username> [password])" >&2
     exit 1
 fi
-USERNAME="${1:?usage: $0 <username> [password]}"
+EMAIL=""
+if [ "${1:-}" = "--email" ]; then
+    EMAIL="${2:?--email requires a value}"
+    shift 2
+fi
+USERNAME="${1:?usage: $0 [--email <email>] <username> [password]}"
 PASSWORD="${2:-}"
 if ! [[ "$USERNAME" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
     echo "Invalid username: $USERNAME" >&2
@@ -57,11 +64,21 @@ if ! grep -q STUDIO_JUPYTER_PORT "$CONF_DIR/users/$USERNAME.env"; then
     echo "STUDIO_JUPYTER_PORT=$JUPYTER_PORT" >> "$CONF_DIR/users/$USERNAME.env"
 fi
 
-echo "==> Studio login password (basic auth)"
-if [ -n "$PASSWORD" ]; then
-    htpasswd -B -b "$CONF_DIR/htpasswd" "$USERNAME" "$PASSWORD"
-else
-    htpasswd -B "$CONF_DIR/htpasswd" "$USERNAME"
+if [ -n "$EMAIL" ]; then
+    echo "==> CILogon identity mapping"
+    EMAIL_LC=$(echo "$EMAIL" | tr "[:upper:]" "[:lower:]")
+    touch "$CONF_DIR/identity.map"
+    if ! grep -q "^$EMAIL_LC " "$CONF_DIR/identity.map"; then
+        echo "$EMAIL_LC $USERNAME;" >> "$CONF_DIR/identity.map"
+    fi
+fi
+if [ -n "$PASSWORD" ] || [ -z "$EMAIL" ]; then
+    echo "==> Studio login password (basic auth)"
+    if [ -n "$PASSWORD" ]; then
+        htpasswd -B -b "$CONF_DIR/htpasswd" "$USERNAME" "$PASSWORD"
+    else
+        htpasswd -B "$CONF_DIR/htpasswd" "$USERNAME"
+    fi
 fi
 
 echo "==> nginx routes"

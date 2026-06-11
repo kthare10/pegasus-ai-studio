@@ -1,0 +1,17 @@
+[Unit]
+Description=Vouch Proxy (CILogon OIDC) for PegasusAI Studio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Config (with secrets) lives in /etc/pegasus-studio/vouch/config.yaml
+ExecStartPre=-/usr/bin/podman pull quay.io/vouch/vouch-proxy:latest
+ExecStart=/usr/bin/podman run --rm --name vouch --network host \
+    -v /etc/pegasus-studio/vouch:/config:ro \
+    quay.io/vouch/vouch-proxy:latest
+ExecStop=/usr/bin/podman stop -t 5 vouch
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
