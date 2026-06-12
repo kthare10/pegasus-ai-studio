@@ -25,7 +25,9 @@ c.ServerApp.allow_remote_access = True
 c.ServerApp.disable_check_xsrf = True
 
 c.ServerApp.terminals_enabled = True
-c.TerminalManager.shell_command = ["/bin/bash"]
+# Login shell so /etc/profile.d runs — that's what puts the studio-installed
+# AI tools (~/.npm-global/bin: claude, codex, ...) on PATH.
+c.TerminalManager.shell_command = ["/bin/bash", "-l"]
 
 # Keep websocket_ping_timeout <= websocket_ping_interval (see container config).
 c.ServerApp.tornado_settings = {

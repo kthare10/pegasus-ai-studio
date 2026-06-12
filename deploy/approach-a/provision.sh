@@ -99,6 +99,7 @@ chmod -R a+rX /opt/pegasus-ai/knowledge
 echo "==> Config dirs"
 mkdir -p "$CONF_DIR/users"
 cp "$SCRIPT_DIR/jupyter/jupyter_server_config.py" "$CONF_DIR/jupyter_server_config.py"
+install -m 644 "$SCRIPT_DIR/profile/pegasus-studio.sh" /etc/profile.d/pegasus-studio.sh
 touch "$CONF_DIR/nginx-users.map" "$CONF_DIR/nginx-jupyter.map" "$CONF_DIR/htpasswd"
 chown www-data:www-data "$CONF_DIR/htpasswd"
 chmod 640 "$CONF_DIR/htpasswd"
