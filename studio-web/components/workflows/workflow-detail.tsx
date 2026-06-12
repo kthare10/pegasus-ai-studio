@@ -199,7 +199,7 @@ export function WorkflowDetail({ runId }: Props) {
             <h3 className="mb-2 text-sm font-semibold text-gray-700">
               Analysis
             </h3>
-            <pre className="max-h-96 overflow-auto rounded-md bg-gray-900 p-4 text-xs text-green-400">
+            <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-900 p-4 text-xs text-green-400">
               {analysis}
             </pre>
           </div>

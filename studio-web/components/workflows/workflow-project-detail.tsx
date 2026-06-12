@@ -269,7 +269,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
             <h3 className="mb-2 text-sm font-semibold text-gray-700">
               Output
             </h3>
-            <pre className="max-h-64 overflow-auto rounded-md bg-gray-900 p-4 text-xs text-green-400">
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-900 p-4 text-xs text-green-400">
               {output}
             </pre>
           </div>
@@ -484,7 +484,7 @@ function RunJobsPanel({ runId }: { runId: string }) {
       )}
 
       {analysis && (
-        <pre className="mt-2 max-h-48 overflow-auto rounded bg-gray-900 p-3 text-xs text-green-400">
+        <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-gray-900 p-3 text-xs text-green-400">
           {analysis}
         </pre>
       )}
