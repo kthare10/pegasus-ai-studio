@@ -29,7 +29,17 @@ condor_version | head -1
 echo "==> System packages"
 # Tolerate unrelated broken third-party repos (e.g. stale GPG keys)
 apt-get update -q || echo "WARNING: apt-get update reported errors; continuing with available repos"
-apt-get install -y -q nginx apache2-utils python3-venv python3-pip rsync curl graphviz
+apt-get install -y -q nginx apache2-utils python3-venv python3-pip rsync curl graphviz squashfs-tools
+
+# Apptainer's bundled mksquashfs (4.7.5) segfaults building SIFs from OCI
+# images (exit 139, "while creating squashfs"); use the distro binary.
+# NOTE: an apptainer package upgrade restores the bundled binary — re-run
+# this script (it is idempotent) after upgrading apptainer.
+BUNDLED=/usr/libexec/apptainer/bin/mksquashfs
+if [ -f "$BUNDLED" ] && [ ! -L "$BUNDLED" ]; then
+    mv "$BUNDLED" "$BUNDLED.bundled"
+    ln -s /usr/bin/mksquashfs "$BUNDLED"
+fi
 
 echo "==> Podman (rootless containers; docker CLI shim)"
 apt-get install -y -q podman podman-docker uidmap slirp4netns

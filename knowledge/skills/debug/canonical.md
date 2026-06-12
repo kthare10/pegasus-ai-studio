@@ -42,6 +42,7 @@ cat <run-dir>/<job-id>.err
 |---------------|-------|-----|
 | `FATAL: Unable to pull container` | Image name typo or network issue | Verify `docker://docker.io/user/image:tag` is correct |
 | `invalid reference format` (stage-in, often with `docker:///...` triple slash) | Pegasus URL serialization mangled a bare official-library reference (`docker://python:3.11-slim` → `docker:///python:3.11-slim`) | Use a fully qualified reference: `docker://docker.io/python:3.11-slim`; check `transformations.yml` for the triple slash |
+| `while creating squashfs: .../mksquashfs command failed: exit status 139` during `apptainer pull` | Apptainer's bundled mksquashfs segfaults building the SIF (seen with 4.7.5) | Use the distro binary: `apt install squashfs-tools`, then replace `/usr/libexec/apptainer/bin/mksquashfs` with a symlink to `/usr/bin/mksquashfs` |
 | `command not found` inside container | Tool not installed | Add tool to Dockerfile and rebuild |
 | `ModuleNotFoundError` for Python package | Package not in container | Add `pip install` or `micromamba install` to Dockerfile |
 
