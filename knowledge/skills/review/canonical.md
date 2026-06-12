@@ -27,7 +27,7 @@ For each item, report: **PASS**, **ERROR** (will fail at runtime), **WARNING**
 - [ ] Every wrapper script in `Transformation(pfn=...)` exists at that path
 - [ ] `is_stageable=True` for scripts on submit host; `is_stageable=False` for scripts in container
 - [ ] Support files (R scripts, JARs) are NOT in the Transformation Catalog — they go in Replica Catalog
-- [ ] Container image string is well-formed (`docker://user/image:tag`)
+- [ ] Container image is FULLY QUALIFIED with registry host (`docker://docker.io/user/image:tag`). Bare official-library refs (`docker://python:3.11-slim`) get serialized to an invalid `docker:///...` triple-slash by the Pegasus API and fail stage-in with "invalid reference format"
 - [ ] Memory and cores are set per tool
 - [ ] External data dirs use CondorIO `transfer_input_files`, NOT container `mounts=[]`
 

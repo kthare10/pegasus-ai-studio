@@ -67,7 +67,8 @@ When a Pegasus workflow contains hierarchical sub-workflows (e.g., a federated l
 
 | Error Pattern | Cause | Fix |
 |---------------|-------|-----|
-| `FATAL: Unable to pull container` | Image name typo or network issue | Verify `docker://user/image:tag` is correct and accessible |
+| `FATAL: Unable to pull container` | Image name typo or network issue | Verify `docker://docker.io/user/image:tag` is correct and accessible |
+| `invalid reference format` with a `docker:///...` triple slash | Pegasus API mangled a bare official-library image ref during URL serialization | Use a fully qualified reference (`docker://docker.io/python:3.11-slim`); inspect `transformations.yml` |
 | `command not found` inside container | Tool not installed | Add tool to Dockerfile and rebuild |
 | `ModuleNotFoundError` for Python package | Package not in container | Add `pip install` or `micromamba install` to Dockerfile |
 
