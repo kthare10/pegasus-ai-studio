@@ -93,6 +93,26 @@ if [ ! -x "$INSTALL_DIR/jupyter/.venv/bin/jupyter-lab" ]; then
 fi
 chmod -R a+rX "$INSTALL_DIR/jupyter"
 
+echo "==> PegasusAI Chat labextension (docks the studio chat inside JupyterLab)"
+EXT_SRC="$REPO_DIR/jupyter-pegasusai-chat"
+if [ -d "$EXT_SRC" ]; then
+    (
+        cd "$EXT_SRC"
+        export PATH="$INSTALL_DIR/jupyter/.venv/bin:$PATH"
+        [ -f yarn.lock ] || touch yarn.lock   # mark as standalone yarn project
+        jlpm install
+        # --development True skips license-webpack-plugin, which crashes on
+        # Node 20 in the bundled builder ("Cannot read 'trim' of undefined").
+        jupyter labextension build --development True .
+    )
+    EXT_DEST="$INSTALL_DIR/jupyter/.venv/share/jupyter/labextensions/jupyter-pegasusai-chat"
+    rm -rf "$EXT_DEST" && mkdir -p "$EXT_DEST"
+    cp -r "$EXT_SRC/jupyter_pegasusai_chat/labextension/"* "$EXT_DEST/"
+    chmod -R a+rX "$EXT_DEST"
+else
+    echo "WARNING: $EXT_SRC missing — JupyterLab chat panel will be absent."
+fi
+
 echo "==> workflow-monitor (drives the dashboard's run/job views via JSONL)"
 # Not on PyPI; install from GitHub
 WFMON_SRC="git+https://github.com/pegasus-isi/workflow-monitor.git"
