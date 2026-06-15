@@ -44,11 +44,18 @@ export function Sidebar() {
         )}
       >
         {!collapsed && (
-          <span className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-pegasus-700 dark:text-pegasus-300">
-              PegasusAI
-            </span>
-            <span className="text-xs text-fgsubtle">Studio</span>
+          // Official PegasusAI lockup (includes the name) — light/dark variants.
+          <span className="flex items-center">
+            <img
+              src="/pegasus-ai-logo-light.png"
+              alt="PegasusAI Studio"
+              className="block h-10 w-auto dark:hidden"
+            />
+            <img
+              src="/pegasus-ai-logo-dark.png"
+              alt="PegasusAI Studio"
+              className="hidden h-10 w-auto dark:block"
+            />
           </span>
         )}
         <button

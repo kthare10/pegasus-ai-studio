@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useThemeStore, applyTheme, type Theme } from "@/lib/stores/theme-store";
-import { PegasusLogo } from "@/components/ui/pegasus-logo";
 
 /**
  * Top-right user menu (LoomAI-style): the authenticated identity with a
@@ -60,11 +59,6 @@ export function UserMenu() {
 
   return (
     <div className="fixed right-4 top-2.5 z-50 flex items-center gap-3">
-      {/* Brand mark (top-right), links home */}
-      <Link href="/" title="PegasusAI Studio" className="flex items-center">
-        <PegasusLogo size={26} />
-      </Link>
-
       <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
