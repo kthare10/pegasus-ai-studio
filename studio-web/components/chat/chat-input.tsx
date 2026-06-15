@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useChatStore } from "@/lib/stores/chat-store";
+import { useNotebookContextStore } from "@/lib/stores/notebook-context-store";
 import { useLLMConfig, useProviderConfigs, useProviders } from "@/lib/hooks/use-llm";
 import * as api from "@/lib/api/client";
 
@@ -27,6 +28,10 @@ export function ChatInput() {
   const setStreaming = useChatStore((s) => s.setStreaming);
   const messages = useChatStore((s) => s.messages);
   const agentId = useChatStore((s) => s.agentId);
+
+  // Active Jupyter notebook (set only when embedded in JupyterLab)
+  const activeNotebookPath = useNotebookContextStore((s) => s.activeNotebookPath);
+  const includeNotebook = useNotebookContextStore((s) => s.include);
 
   // Provider/model overrides from store
   const chatProvider = useChatStore((s) => s.provider);
@@ -75,10 +80,18 @@ export function ChatInput() {
     };
     addMessage(userMsg);
 
+    // When embedded in JupyterLab with a focused notebook, ride its path along
+    // in the API copy of the message (not the displayed one). Provider-safe:
+    // it's user text, not a system role.
+    const apiText =
+      activeNotebookPath && includeNotebook
+        ? `${text}\n\n[Active Jupyter notebook: ${activeNotebookPath} — when I refer to "this notebook", read this file with your tools.]`
+        : text;
+
     // Build message history for the API
     const apiMessages = [
       ...messages.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user", content: text },
+      { role: "user", content: apiText },
     ];
 
     const requestId = `req-${Date.now()}`;
@@ -156,6 +169,8 @@ export function ChatInput() {
     addToolCall,
     addToolResult,
     setStreaming,
+    activeNotebookPath,
+    includeNotebook,
   ]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

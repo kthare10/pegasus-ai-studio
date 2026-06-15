@@ -5,6 +5,7 @@ import {
 } from '@jupyterlab/application';
 import { ICommandPalette, IFrame } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
+import { INotebookTracker } from '@jupyterlab/notebook';
 import { LabIcon } from '@jupyterlab/ui-components';
 
 // Monochrome chat glyph (currentColor) — JupyterLab sidebar icons are
@@ -26,19 +27,39 @@ const COMMAND = 'pegasusai:open-chat';
 /**
  * Adds a "PegasusAI Chat" panel that embeds the studio chat (/chat) as an
  * iframe. Same-origin with JupyterLab, so the gateway session and the
- * studio's /api calls work without extra auth.
+ * studio's /api calls work without extra auth. Posts the focused notebook
+ * path into the iframe so the chat is notebook-aware.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'jupyter-pegasusai-chat:plugin',
   autoStart: true,
-  optional: [ILauncher, ICommandPalette, ILayoutRestorer],
+  optional: [ILauncher, ICommandPalette, ILayoutRestorer, INotebookTracker],
   activate: (
     app: JupyterFrontEnd,
     launcher: ILauncher | null,
     palette: ICommandPalette | null,
-    restorer: ILayoutRestorer | null
+    restorer: ILayoutRestorer | null,
+    notebooks: INotebookTracker | null
   ) => {
     let widget: IFrame | null = null;
+
+    const iframeWindow = (): Window | null => {
+      const el = widget?.node.querySelector('iframe') as HTMLIFrameElement | null;
+      return el?.contentWindow ?? null;
+    };
+
+    // Tell the chat which notebook is focused (it reads the file server-side).
+    const postActiveNotebook = () => {
+      const win = iframeWindow();
+      if (!win) {
+        return;
+      }
+      const path = notebooks?.currentWidget?.context?.path ?? null;
+      win.postMessage(
+        { type: 'pegasusai:active-notebook', path },
+        window.location.origin
+      );
+    };
 
     // Create the chat iframe and dock it in the right sidebar (so its icon is
     // always visible, like the file browser). Returns the existing one if live.
@@ -87,6 +108,18 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (palette) {
       palette.addItem({ command: COMMAND, category: 'PegasusAI' });
     }
+
+    // Push the active notebook when the user switches notebooks...
+    notebooks?.currentChanged.connect(() => postActiveNotebook());
+    // ...and when the chat iframe (re)loads and announces it's ready.
+    window.addEventListener('message', (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) {
+        return;
+      }
+      if (e.data?.type === 'pegasusai:ready') {
+        postActiveNotebook();
+      }
+    });
 
     // Dock the panel on startup so the right-sidebar icon is always present.
     void Promise.resolve(restorer ? app.restored : null).then(() => {
