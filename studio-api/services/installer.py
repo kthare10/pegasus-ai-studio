@@ -151,7 +151,7 @@ _INLINE_REGISTRY: list[dict[str, Any]] = [
         "supports_mcp": True,
         "supports_web": True,
         "required_env": [],
-        "paid": True,
+        "paid": False,
         "knowledge_adapter": "opencode",
         "icon": "opencode.svg",
         "homepage": "https://opencode.ai",
