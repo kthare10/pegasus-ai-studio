@@ -44,18 +44,19 @@ export function Sidebar() {
         )}
       >
         {!collapsed && (
-          // Official PegasusAI lockup (includes the name) — light/dark variants.
-          <span className="flex items-center">
+          // Official PegasusAI lockup (says "PegasusAI") + a muted "Studio".
+          <span className="flex items-center gap-1.5">
             <img
               src="/pegasus-ai-logo-light.png"
-              alt="PegasusAI Studio"
+              alt="PegasusAI"
               className="block h-10 w-auto dark:hidden"
             />
             <img
               src="/pegasus-ai-logo-dark.png"
-              alt="PegasusAI Studio"
+              alt="PegasusAI"
               className="hidden h-10 w-auto dark:block"
             />
+            <span className="text-sm font-medium text-fgsubtle">Studio</span>
           </span>
         )}
         <button
