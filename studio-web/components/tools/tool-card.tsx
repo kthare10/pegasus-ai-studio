@@ -53,7 +53,17 @@ export function ToolCard({ tool }: Props) {
     <div className="rounded-lg border border-line bg-surface p-3">
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-medium text-fg">{info.name}</h3>
+          <h3 className="flex items-center gap-1.5 font-medium text-fg">
+            {info.name}
+            {info.paid && (
+              <span
+                title="Runs on your own LLM API tokens"
+                className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+              >
+                Paid
+              </span>
+            )}
+          </h3>
           <p className="text-xs text-fgmuted">{info.vendor}</p>
         </div>
         {status && (
