@@ -1,7 +1,7 @@
 /**
- * PegasusAI mark: three swept wing feathers rising to an AI sparkle, on a
- * teal-to-navy badge. Used as the chat logo / assistant avatar. Tuned to read
- * cleanly from ~16px (sidebar/avatar) up.
+ * PegasusAI mark: a stylized wing of three layered, curved feathers rising to
+ * an AI sparkle, on a teal-to-navy badge. Used as the chat logo / assistant
+ * avatar and the studio brand mark. Tuned to read from ~18px up.
  */
 export function PegasusLogo({ size = 20 }: { size?: number }) {
   return (
@@ -22,33 +22,25 @@ export function PegasusLogo({ size = 20 }: { size?: number }) {
 
       <circle cx="12" cy="12" r="12" fill="url(#pegasus-badge)" />
 
-      {/* Wing: three feathers fanning up-right from a short leading edge,
-          brightening toward the tip for depth. */}
+      {/* Wing — three overlapping curved feather blades fanning up-right,
+          brightening toward the leading edge for depth. Each blade is a
+          teardrop: convex leading edge, concave trailing edge. */}
       <path
-        d="M5.4 17 Q11 13.6 16.6 11.1"
-        stroke="#ffffff"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        fill="none"
+        d="M6 16.6 C 8.7 11.2 12.6 8.6 18.2 7.4 C 14.6 10.2 11.6 13 9.1 16 C 8.1 16.2 7 16.5 6 16.6 Z"
+        fill="#7fe3f5"
       />
       <path
-        d="M6 15.9 Q10.6 11.5 15.1 7.7"
-        stroke="#cdeffb"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        fill="none"
+        d="M6.7 17.6 C 9.4 12.8 12.9 10.5 17.6 9.7 C 14.4 12.2 11.7 14.6 9.6 17 C 8.7 17.2 7.6 17.5 6.7 17.6 Z"
+        fill="#cdeffb"
       />
       <path
-        d="M6.7 14.9 Q9.7 10.6 12.8 6.4"
-        stroke="#7fe3f5"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        fill="none"
+        d="M7.6 18.7 C 10 14.7 13 12.8 16.7 12.2 C 14 14.3 11.7 16.5 10.1 18.5 C 9.3 18.6 8.4 18.7 7.6 18.7 Z"
+        fill="#ffffff"
       />
 
       {/* AI sparkle in the open upper-right */}
       <path
-        d="M17.9 3.7 C18.15 5.45 18.75 6.05 20.5 6.3 C18.75 6.55 18.15 7.15 17.9 8.9 C17.65 7.15 17.05 6.55 15.3 6.3 C17.05 6.05 17.65 5.45 17.9 3.7 Z"
+        d="M17.9 3.6 C18.15 5.35 18.75 5.95 20.5 6.2 C18.75 6.45 18.15 7.05 17.9 8.8 C17.65 7.05 17.05 6.45 15.3 6.2 C17.05 5.95 17.65 5.35 17.9 3.6 Z"
         fill="#ffffff"
       />
     </svg>
