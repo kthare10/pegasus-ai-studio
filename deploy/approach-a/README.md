@@ -164,6 +164,26 @@ studio-api re-arms `workflow-monitor` JSONL feeds on startup):
 - **Fair-share**: per-user Condor accounting groups (per-user systemd caps
   already exist, see above).
 
+## Multi-site pools: enable CCB
+
+If execute nodes live on different subnets/sites than the submit host (e.g. a
+FABRIC slice with workers at multiple racks), jobs may sit **idle forever**
+even though `condor_q -better-analyze` says slots are willing to run them. The
+ShadowLog shows the claim `ACCEPTED` then `Can no longer talk to
+condor_starter` / `EXITING WITH STATUS 107`: the submit host can reach the
+worker, but the worker can't reach the shadow back, and Condor Connection
+Brokering isn't being used. Fix on the submit host (it already runs a CCB
+server as the CM):
+
+```bash
+echo 'CCB_ADDRESS = $(CONDOR_HOST)' | sudo tee /etc/condor/config.d/99-ccb.conf
+sudo systemctl reload condor
+```
+
+Verify: a job pinned to a same-subnet worker runs; before the fix a
+cross-subnet one stays idle, after it runs. (provision.sh does not set this —
+the studio assumes a working pool — but it's a safe, reversible drop-in.)
+
 ## Caveats
 
 - Users get real shells (web PTY + AI tools are arbitrary command execution by
