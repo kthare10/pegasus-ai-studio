@@ -43,8 +43,8 @@ body {
 }
 
 /* Form controls default to theme tokens so they're not white-on-white in dark
-   mode. Tailwind bg-*/text-* utilities still override (higher specificity);
-   checkboxes/radios keep their accent-color. */
+   mode. Tailwind background/text utilities still override (higher specificity);
+   checkboxes and radios keep their accent-color. */
 input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
