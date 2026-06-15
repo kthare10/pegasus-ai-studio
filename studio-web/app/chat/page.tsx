@@ -93,7 +93,7 @@ export default function ChatEmbedPage() {
           </span>
         </div>
       )}
-      <ChatInput />
+      <ChatInput compact />
     </div>
   );
 }

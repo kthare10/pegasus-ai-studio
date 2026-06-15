@@ -8,17 +8,17 @@ import * as api from "@/lib/api/client";
 
 let _msgId = 0;
 
-export function ChatInput() {
+export function ChatInput({ compact = false }: { compact?: boolean }) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-grow the textarea with content (3 rows min via rows=3, capped by
-  // max-h; shrinks back when cleared after send).
+  // Auto-grow the textarea with content, with a floor (~3 lines) so it never
+  // collapses to a single line when empty, capped by a max height.
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 224)}px`;
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 72), 224)}px`;
   }, [input]);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const addMessage = useChatStore((s) => s.addMessage);
@@ -188,8 +188,9 @@ export function ChatInput() {
   return (
     <div className="border-t border-line bg-surface p-4">
       <div className="mx-auto max-w-3xl space-y-2">
-        {/* Provider / Model selectors */}
-        <div className="flex items-center gap-2 text-xs">
+        {/* Provider / Model selectors (hidden in compact/embedded mode) */}
+        {!compact && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <label className="text-fgmuted">Provider:</label>
           <select
             value={chatProvider || ""}
@@ -219,6 +220,7 @@ export function ChatInput() {
             className="w-48 rounded border border-line px-2 py-1 text-xs text-fg focus:border-pegasus-500 focus:ring-pegasus-500"
           />
         </div>
+        )}
 
         {/* Input area */}
         <div className="flex items-end gap-2">
@@ -229,7 +231,7 @@ export function ChatInput() {
             onKeyDown={handleKeyDown}
             placeholder="Ask about Pegasus workflows... (Shift+Enter for newline)"
             rows={3}
-            className="max-h-56 flex-1 resize-none rounded-md border border-line px-3 py-2 text-sm shadow-sm focus:border-pegasus-500 focus:ring-pegasus-500"
+            className="min-h-[72px] max-h-56 flex-1 resize-none rounded-md border border-line px-3 py-2 text-sm shadow-sm focus:border-pegasus-500 focus:ring-pegasus-500"
           />
           {isStreaming ? (
             <button
