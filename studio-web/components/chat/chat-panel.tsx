@@ -7,11 +7,18 @@ import { cn } from "@/lib/utils";
 
 export function ChatPanel() {
   const messages = useChatStore((s) => s.messages);
+  const isStreaming = useChatStore((s) => s.isStreaming);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Show a "thinking" indicator while streaming but before the assistant's
+  // first token (no assistant message yet — the model is reasoning / a tool
+  // is running). Once content arrives, the last message is the assistant's.
+  const last = messages[messages.length - 1];
+  const showThinking = isStreaming && (!last || last.role === "user");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, showThinking]);
 
   return (
     <div className="h-full overflow-auto p-4">
@@ -37,9 +44,32 @@ export function ChatPanel() {
           {messages.map((msg) => (
             <MessageBubble key={msg.id} msg={msg} />
           ))}
+          {showThinking && <ThinkingIndicator />}
           <div ref={bottomRef} />
         </div>
       )}
+    </div>
+  );
+}
+
+function ThinkingIndicator() {
+  return (
+    <div className="flex justify-start">
+      <div className="mr-2 mt-1 shrink-0">
+        <PegasusLogo size={24} />
+      </div>
+      <div className="flex items-center gap-1 rounded-lg border border-line bg-surface px-4 py-3">
+        <span className="text-xs text-fgmuted">Thinking</span>
+        <span className="flex gap-1">
+          {[0, 150, 300].map((d) => (
+            <span
+              key={d}
+              className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-fgsubtle"
+              style={{ animationDelay: `${d}ms` }}
+            />
+          ))}
+        </span>
+      </div>
     </div>
   );
 }
