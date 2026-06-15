@@ -3,12 +3,7 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
-import {
-  ICommandPalette,
-  IFrame,
-  MainAreaWidget,
-  WidgetTracker
-} from '@jupyterlab/apputils';
+import { ICommandPalette, IFrame } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
 import { LabIcon } from '@jupyterlab/ui-components';
 
@@ -44,12 +39,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
     palette: ICommandPalette | null,
     restorer: ILayoutRestorer | null
   ) => {
-    const tracker = new WidgetTracker<MainAreaWidget<IFrame>>({
-      namespace: 'pegasusai-chat'
-    });
-    let widget: MainAreaWidget<IFrame> | null = null;
+    let widget: IFrame | null = null;
 
-    const newWidget = (): MainAreaWidget<IFrame> => {
+    // Create the chat iframe and dock it in the right sidebar (so its icon is
+    // always visible, like the file browser). Returns the existing one if live.
+    const ensureWidget = (): IFrame => {
+      if (widget && !widget.isDisposed) {
+        return widget;
+      }
       const iframe = new IFrame({
         sandbox: [
           'allow-scripts',
@@ -62,15 +59,17 @@ const plugin: JupyterFrontEndPlugin<void> = {
       // Absolute path -> resolves to https://<host>/chat (studio app),
       // same origin as /jupyter/, so cookies + /api work.
       iframe.url = '/chat';
+      iframe.id = 'pegasusai-chat';
       iframe.title.label = 'PegasusAI Chat';
       iframe.title.icon = pegasusIcon;
-      iframe.title.closable = true;
-      const w = new MainAreaWidget({ content: iframe });
-      w.id = 'pegasusai-chat';
-      w.title.label = 'PegasusAI Chat';
-      w.title.icon = pegasusIcon;
-      w.title.closable = true;
-      return w;
+      iframe.title.caption = 'PegasusAI workflow assistant';
+      iframe.title.closable = false;
+      iframe.disposed.connect(() => {
+        widget = null;
+      });
+      widget = iframe;
+      app.shell.add(iframe, 'right', { rank: 500 });
+      return iframe;
     };
 
     app.commands.addCommand(COMMAND, {
@@ -78,20 +77,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       caption: 'Open the PegasusAI workflow assistant',
       icon: pegasusIcon,
       execute: () => {
-        if (!widget || widget.isDisposed) {
-          widget = newWidget();
-          widget.disposed.connect(() => {
-            widget = null;
-          });
-        }
-        if (!tracker.has(widget)) {
-          void tracker.add(widget);
-        }
-        if (!widget.isAttached) {
-          // Dock on the right as a side panel.
-          app.shell.add(widget, 'right', { rank: 500 });
-        }
-        app.shell.activateById(widget.id);
+        const w = ensureWidget();
+        app.shell.activateById(w.id);
       }
     });
 
@@ -101,12 +88,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (palette) {
       palette.addItem({ command: COMMAND, category: 'PegasusAI' });
     }
-    if (restorer) {
-      void restorer.restore(tracker, {
-        command: COMMAND,
-        name: () => 'pegasusai-chat'
-      });
-    }
+
+    // Dock the panel on startup so the right-sidebar icon is always present.
+    void Promise.resolve(restorer ? app.restored : null).then(() => {
+      ensureWidget();
+    });
   }
 };
 
