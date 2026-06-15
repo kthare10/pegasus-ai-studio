@@ -17,7 +17,7 @@ export function ChatPanel() {
     <div className="h-full overflow-auto p-4">
       {messages.length === 0 ? (
         <div className="flex h-full items-center justify-center">
-          <div className="text-center text-gray-400">
+          <div className="text-center text-fgsubtle">
             <div className="mb-3 flex justify-center">
               <PegasusLogo size={48} />
             </div>
@@ -26,9 +26,9 @@ export function ChatPanel() {
               Ask me to create, debug, or review Pegasus workflows.
             </p>
             <p className="mt-1 text-sm">
-              Try: <code className="rounded bg-gray-100 px-1">/scaffold</code>,{" "}
-              <code className="rounded bg-gray-100 px-1">/debug</code>,{" "}
-              <code className="rounded bg-gray-100 px-1">/review</code>
+              Try: <code className="rounded bg-muted px-1">/scaffold</code>,{" "}
+              <code className="rounded bg-muted px-1">/debug</code>,{" "}
+              <code className="rounded bg-muted px-1">/review</code>
             </p>
           </div>
         </div>
@@ -59,7 +59,7 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
           "max-w-[80%] rounded-lg px-4 py-3 text-sm",
           isUser
             ? "bg-pegasus-600 text-white"
-            : "bg-white border border-gray-200 text-gray-800"
+            : "bg-surface border border-line text-fg"
         )}
       >
         {/* Main content */}
@@ -69,14 +69,14 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
 
         {/* Tool calls */}
         {msg.toolCalls && msg.toolCalls.length > 0 && (
-          <div className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+          <div className="mt-2 space-y-1 border-t border-line pt-2">
             {msg.toolCalls.map((tc) => (
               <div
                 key={tc.id}
-                className="rounded bg-gray-50 px-2 py-1 text-xs text-gray-600"
+                className="rounded bg-base px-2 py-1 text-xs text-fgmuted"
               >
                 <span className="font-mono font-medium">{tc.name}</span>
-                <span className="ml-1 text-gray-400">called</span>
+                <span className="ml-1 text-fgsubtle">called</span>
               </div>
             ))}
           </div>
@@ -84,17 +84,17 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
 
         {/* Tool results */}
         {msg.toolResults && msg.toolResults.length > 0 && (
-          <div className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+          <div className="mt-2 space-y-1 border-t border-line pt-2">
             {msg.toolResults.map((tr) => (
               <details
                 key={tr.id}
-                className="rounded bg-gray-50 text-xs"
+                className="rounded bg-base text-xs"
               >
-                <summary className="cursor-pointer px-2 py-1 text-gray-600">
+                <summary className="cursor-pointer px-2 py-1 text-fgmuted">
                   <span className="font-mono font-medium">{tr.name}</span>{" "}
                   result
                 </summary>
-                <pre className="max-h-40 overflow-auto px-2 pb-1 text-gray-500">
+                <pre className="max-h-40 overflow-auto px-2 pb-1 text-fgmuted">
                   {tr.result}
                 </pre>
               </details>

@@ -2,21 +2,36 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useThemeStore, applyTheme, type Theme } from "@/lib/stores/theme-store";
 
 /**
  * Top-right user menu (LoomAI-style): the authenticated identity with a
- * dropdown for Settings, Help, and Sign out.
+ * dropdown for theme, Settings, Help, and Sign out.
  *
  * Identity comes from /api/whoami (the gateway's X-Auth-User header — CILogon
- * email or basic-auth username). In the plain single-user container there is
- * no identity, so the menu hides itself entirely. Sign out shows only when an
- * auth layer answers on /logout.
+ * email or basic-auth username). With no identity (plain container) the menu
+ * still renders for theme/Settings/Help, just without the email chrome. Sign
+ * out shows only when an auth layer answers on /logout.
  */
+const THEMES: { value: Theme; label: string; icon: string }[] = [
+  { value: "light", label: "Light", icon: "☀️" },
+  { value: "dark", label: "Dark", icon: "🌙" },
+  { value: "system", label: "System", icon: "🖥️" },
+];
+
 export function UserMenu() {
   const [email, setEmail] = useState<string | null>(null);
   const [canSignOut, setCanSignOut] = useState(false);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+
+  // Re-assert the persisted theme after hydration (system changes, SSR mismatch).
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     fetch("/api/whoami")
@@ -40,21 +55,19 @@ export function UserMenu() {
     }
   }, [open]);
 
-  // With no identity (plain single-user deployments) the menu still renders —
-  // Settings/Help moved here from the sidebar — just without the email chrome.
   const initial = email ? email[0]?.toUpperCase() ?? "?" : "⚙";
 
   return (
     <div ref={menuRef} className="fixed right-4 top-2.5 z-50">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-3 text-sm shadow-sm transition-colors hover:bg-gray-50"
+        className="flex items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm shadow-sm transition-colors hover:bg-muted"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pegasus-600 text-xs font-semibold text-white">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-fg">
           {initial}
         </span>
         {email && (
-          <span className="max-w-[180px] truncate text-gray-700">{email}</span>
+          <span className="max-w-[180px] truncate text-fgmuted">{email}</span>
         )}
         <svg
           width="12"
@@ -63,27 +76,49 @@ export function UserMenu() {
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="text-gray-400"
+          className="text-fgsubtle"
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="absolute right-0 mt-1.5 w-60 overflow-hidden rounded-lg border border-line bg-surface shadow-lg">
           {email && (
-            <div className="border-b border-gray-100 px-4 py-3">
-              <p className="text-xs text-gray-400">Signed in as</p>
-              <p className="truncate text-sm font-medium text-gray-800">
-                {email}
-              </p>
+            <div className="border-b border-line px-4 py-3">
+              <p className="text-xs text-fgsubtle">Signed in as</p>
+              <p className="truncate text-sm font-medium text-fg">{email}</p>
             </div>
           )}
-          <nav className="py-1 text-sm text-gray-700">
+
+          {/* Theme switch */}
+          <div className="border-b border-line px-4 py-3">
+            <p className="mb-2 text-xs text-fgsubtle">Theme</p>
+            <div className="flex gap-1 rounded-md bg-muted p-1">
+              {THEMES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setTheme(t.value)}
+                  className={
+                    "flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-xs transition-colors " +
+                    (theme === t.value
+                      ? "bg-surface text-fg shadow-sm"
+                      : "text-fgmuted hover:text-fg")
+                  }
+                  title={t.label}
+                >
+                  <span>{t.icon}</span>
+                  <span className="hidden sm:inline">{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <nav className="py-1 text-sm text-fg">
             <Link
               href="/settings"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2 hover:bg-gray-50"
+              className="block px-4 py-2 hover:bg-muted"
             >
               ⚙️ Settings
             </Link>
@@ -92,7 +127,7 @@ export function UserMenu() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2 hover:bg-gray-50"
+              className="block px-4 py-2 hover:bg-muted"
             >
               ❓ Help
             </a>
@@ -103,7 +138,7 @@ export function UserMenu() {
                   e.preventDefault();
                   window.location.href = `/logout?url=${window.location.origin}/welcome`;
                 }}
-                className="block border-t border-gray-100 px-4 py-2 text-red-600 hover:bg-red-50"
+                className="block border-t border-line px-4 py-2 text-rose-500 hover:bg-muted"
               >
                 ↩ Sign out
               </a>

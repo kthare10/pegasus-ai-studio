@@ -32,29 +32,29 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-gray-200 bg-white transition-[width] duration-150",
+        "flex flex-col border-r border-line bg-surface transition-[width] duration-150",
         collapsed ? "w-14" : "w-56"
       )}
     >
       {/* Logo + collapse toggle */}
       <div
         className={cn(
-          "flex h-14 items-center border-b border-gray-200",
+          "flex h-14 items-center border-b border-line",
           collapsed ? "justify-center px-0" : "justify-between px-4"
         )}
       >
         {!collapsed && (
           <span className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-pegasus-700">
+            <span className="text-lg font-bold text-pegasus-700 dark:text-pegasus-300">
               PegasusAI
             </span>
-            <span className="text-xs text-gray-400">Studio</span>
+            <span className="text-xs text-fgsubtle">Studio</span>
           </span>
         )}
         <button
           onClick={toggleSidebar}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="rounded p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+          className="rounded p-1.5 text-fgsubtle transition-colors hover:bg-muted hover:text-fg"
         >
           <svg
             width="16"
@@ -91,14 +91,14 @@ export function Sidebar() {
                 title={item.label}
                 className={cn(
                   base,
-                  "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  "text-fgmuted hover:bg-muted hover:text-fg"
                 )}
               >
                 <span>{item.icon}</span>
                 {!collapsed && (
                   <>
                     {item.label}
-                    <span className="ml-auto text-xs text-gray-400">↗</span>
+                    <span className="ml-auto text-xs text-fgsubtle">↗</span>
                   </>
                 )}
               </a>
@@ -115,8 +115,8 @@ export function Sidebar() {
               className={cn(
                 base,
                 active
-                  ? "bg-pegasus-50 text-pegasus-700"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-pegasus-50 dark:bg-pegasus-400/10 text-pegasus-700 dark:text-pegasus-300"
+                  : "text-fgmuted hover:bg-muted hover:text-fg"
               )}
             >
               <span>{item.icon}</span>
@@ -126,9 +126,9 @@ export function Sidebar() {
         })}
 
         {/* Quick Access */}
-        <div className="mt-4 border-t border-gray-200 pt-3">
+        <div className="mt-4 border-t border-line pt-3">
           {!collapsed && (
-            <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-gray-400">
+            <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-fgsubtle">
               Quick Access
             </p>
           )}
@@ -139,8 +139,8 @@ export function Sidebar() {
               "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               collapsed && "justify-center px-0",
               chatOpen
-                ? "bg-pegasus-50 text-pegasus-700"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-pegasus-50 dark:bg-pegasus-400/10 text-pegasus-700 dark:text-pegasus-300"
+                : "text-fgmuted hover:bg-muted hover:text-fg"
             )}
           >
             <PegasusLogo size={18} />
@@ -154,7 +154,7 @@ export function Sidebar() {
               collapsed && "justify-center px-0",
               terminalOpen
                 ? "bg-gray-800 text-white"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                : "text-fgmuted hover:bg-muted hover:text-fg"
             )}
           >
             <svg
@@ -177,7 +177,7 @@ export function Sidebar() {
 
       {/* Footer */}
       {!collapsed && (
-        <div className="border-t border-gray-200 p-3 text-xs text-gray-400">
+        <div className="border-t border-line p-3 text-xs text-fgsubtle">
           v0.1.0
         </div>
       )}

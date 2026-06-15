@@ -80,7 +80,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
 
   if (!project) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-400">
+      <div className="flex h-full items-center justify-center text-fgsubtle">
         Project not found
       </div>
     );
@@ -120,13 +120,13 @@ export function WorkflowProjectDetail({ projectId }: Props) {
   return (
     <div className="h-full overflow-auto">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="border-b border-line bg-surface px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-fg">
               {project.name}
             </h2>
-            <p className="text-sm text-gray-500">{project.project_dir}</p>
+            <p className="text-sm text-fgmuted">{project.project_dir}</p>
           </div>
           <span
             className={cn(
@@ -142,7 +142,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
       <div className="p-6 space-y-6">
         {/* Files section */}
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">
+          <h3 className="mb-3 text-sm font-semibold text-fg">
             Project Files
           </h3>
           <div className="grid grid-cols-2 gap-2">
@@ -164,17 +164,17 @@ export function WorkflowProjectDetail({ projectId }: Props) {
         {/* Parameters (discovered per-workflow from the generator's argparse) */}
         {(genParams.length > 0 || planParams.length > 0) && (
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+            <h3 className="mb-3 text-sm font-semibold text-fg">
               Parameters
             </h3>
 
             {genParams.length > 0 && (
-              <div className="mb-4 rounded-md border border-gray-200 p-4">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className="mb-4 rounded-md border border-line p-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-fgsubtle">
                   Generate
                 </p>
                 {mutexGroups.map((grp, i) => (
-                  <p key={i} className="mb-2 text-xs text-amber-600">
+                  <p key={i} className="mb-2 text-xs text-amber-600 dark:text-amber-400">
                     Provide exactly one of:{" "}
                     {grp
                       .map((d) => genParams.find((p) => p.dest === d)?.flag ?? d)
@@ -195,8 +195,8 @@ export function WorkflowProjectDetail({ projectId }: Props) {
             )}
 
             {planParams.length > 0 && (
-              <div className="rounded-md border border-gray-200 p-4">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className="rounded-md border border-line p-4">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-fgsubtle">
                   Plan / Submit
                 </p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -216,7 +216,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
 
         {/* Action buttons */}
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-gray-700">
+          <h3 className="mb-3 text-sm font-semibold text-fg">
             Actions
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -254,7 +254,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
                       live: false,
                     })
                   }
-                  className="rounded-md border border-pegasus-300 bg-white px-4 py-2 text-sm text-pegasus-700 hover:bg-pegasus-50"
+                  className="rounded-md border border-pegasus-300 bg-surface px-4 py-2 text-sm text-pegasus-700 dark:text-pegasus-300 hover:bg-pegasus-50 dark:bg-pegasus-400/10"
                 >
                   Visualize DAG
                 </button>
@@ -266,7 +266,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
         {/* Command output */}
         {output && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-gray-700">
+            <h3 className="mb-2 text-sm font-semibold text-fg">
               Output
             </h3>
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-md bg-gray-900 p-4 text-xs text-green-400">
@@ -278,10 +278,10 @@ export function WorkflowProjectDetail({ projectId }: Props) {
         {/* Submitted runs */}
         {project.runs.length > 0 && (
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-gray-700">
+            <h3 className="mb-3 text-sm font-semibold text-fg">
               Runs ({project.runs.length})
             </h3>
-            <ul className="divide-y divide-gray-100 rounded-md border border-gray-200">
+            <ul className="divide-y divide-line rounded-md border border-line">
               {project.runs.map((run) => (
                 <li key={run.run_id}>
                   <button
@@ -291,12 +291,12 @@ export function WorkflowProjectDetail({ projectId }: Props) {
                       )
                     }
                     className={cn(
-                      "w-full px-4 py-3 text-left transition-colors hover:bg-gray-50",
-                      selectedRunId === run.run_id && "bg-pegasus-50"
+                      "w-full px-4 py-3 text-left transition-colors hover:bg-base",
+                      selectedRunId === run.run_id && "bg-pegasus-50 dark:bg-pegasus-400/10"
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-sm text-gray-700">
+                      <span className="font-mono text-sm text-fg">
                         {run.run_id.slice(0, 12)}...
                       </span>
                       <span className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export function WorkflowProjectDetail({ projectId }: Props) {
                             });
                           }}
                           title="Visualize the planned DAG"
-                          className="cursor-pointer rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:border-pegasus-400 hover:text-pegasus-700"
+                          className="cursor-pointer rounded border border-line px-2 py-0.5 text-xs text-fgmuted hover:border-pegasus-400 hover:text-pegasus-700 dark:text-pegasus-300"
                         >
                           DAG
                         </span>
@@ -360,7 +360,7 @@ function ParamField({
 
   if (param.is_flag) {
     return (
-      <label className="flex items-center gap-2 text-sm text-gray-700">
+      <label className="flex items-center gap-2 text-sm text-fg">
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -373,7 +373,7 @@ function ParamField({
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-600">
+      <label className="text-xs font-medium text-fgmuted">
         {label}
         {param.required && <span className="ml-1 text-red-500">*</span>}
       </label>
@@ -381,7 +381,7 @@ function ParamField({
         <select
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-2 py-1 text-sm"
+          className="rounded-md border border-line px-2 py-1 text-sm"
         >
           {param.choices.map((c) => (
             <option key={c} value={c}>
@@ -395,11 +395,11 @@ function ParamField({
           value={String(value ?? "")}
           placeholder={param.default == null ? "" : String(param.default)}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-2 py-1 text-sm font-mono"
+          className="rounded-md border border-line px-2 py-1 text-sm font-mono"
         />
       )}
       {param.help && (
-        <span className="text-xs text-gray-400">{param.help}</span>
+        <span className="text-xs text-fgsubtle">{param.help}</span>
       )}
     </div>
   );
@@ -407,11 +407,11 @@ function ParamField({
 
 function FileCheck({ label, exists }: { label: string; exists: boolean }) {
   return (
-    <div className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm">
+    <div className="flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm">
       <span className={exists ? "text-green-600" : "text-gray-300"}>
         {exists ? "\u2713" : "\u2717"}
       </span>
-      <span className={exists ? "text-gray-700" : "text-gray-400"}>
+      <span className={exists ? "text-fg" : "text-fgsubtle"}>
         {label}
       </span>
     </div>
@@ -429,9 +429,9 @@ function RunJobsPanel({ runId }: { runId: string }) {
   };
 
   return (
-    <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+    <div className="border-t border-line px-4 py-3 bg-base">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-500">Jobs</span>
+        <span className="text-xs font-medium text-fgmuted">Jobs</span>
         <button
           onClick={handleAnalyze}
           disabled={analyze.isPending}
@@ -442,18 +442,18 @@ function RunJobsPanel({ runId }: { runId: string }) {
       </div>
 
       {isLoading ? (
-        <p className="text-xs text-gray-500">Loading jobs...</p>
+        <p className="text-xs text-fgmuted">Loading jobs...</p>
       ) : data?.jobs && data.jobs.length > 0 ? (
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-gray-200 text-left text-xs font-medium text-gray-500">
+            <tr className="border-b border-line text-left text-xs font-medium text-fgmuted">
               <th className="pb-1 pr-3">Job</th>
               <th className="pb-1 pr-3">Status</th>
               <th className="pb-1 pr-3">Duration</th>
               <th className="pb-1">Exit</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-line">
             {data.jobs.map((job: Record<string, unknown>, i: number) => (
               <tr key={i}>
                 <td className="py-1 pr-3 font-mono">
@@ -480,7 +480,7 @@ function RunJobsPanel({ runId }: { runId: string }) {
           </tbody>
         </table>
       ) : (
-        <p className="text-xs text-gray-500">No job data available.</p>
+        <p className="text-xs text-fgmuted">No job data available.</p>
       )}
 
       {analysis && (

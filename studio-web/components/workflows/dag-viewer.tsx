@@ -164,21 +164,21 @@ export function DagViewer({ graphUrl, title, live = false, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="flex h-[85vh] w-full max-w-6xl flex-col rounded-lg bg-white shadow-xl"
+        className="flex h-[85vh] w-full max-w-6xl flex-col rounded-lg bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h3 className="text-sm font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <h3 className="text-sm font-semibold text-fg">
             {title}
             {data?.workflow_status && (
-              <span className="ml-2 text-xs font-normal text-gray-400">
+              <span className="ml-2 text-xs font-normal text-fgsubtle">
                 ({data.workflow_status})
               </span>
             )}
           </h3>
           <button
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded p-1 text-fgsubtle hover:bg-muted hover:text-fgmuted"
             aria-label="Close"
           >
             ✕
@@ -187,7 +187,7 @@ export function DagViewer({ graphUrl, title, live = false, onClose }: Props) {
 
         <div className="relative flex-1">
           {error ? (
-            <p className="p-6 text-sm text-red-600">
+            <p className="p-6 text-sm text-red-600 dark:text-rose-400">
               Could not render DAG: {error}
             </p>
           ) : flow ? (
@@ -204,12 +204,12 @@ export function DagViewer({ graphUrl, title, live = false, onClose }: Props) {
               <Controls showInteractive={false} />
             </ReactFlow>
           ) : (
-            <p className="p-6 text-sm text-gray-400">Loading DAG…</p>
+            <p className="p-6 text-sm text-fgsubtle">Loading DAG…</p>
           )}
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 border-t border-gray-200 px-4 py-2 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2 text-xs text-fgmuted">
           {Object.entries(STATUS_STYLE)
             .filter(([k]) => k !== "queued")
             .map(([k, s]) => (
@@ -221,7 +221,7 @@ export function DagViewer({ graphUrl, title, live = false, onClose }: Props) {
                 {k}
               </span>
             ))}
-          {live && <span className="ml-auto text-gray-400">live · 4s</span>}
+          {live && <span className="ml-auto text-fgsubtle">live · 4s</span>}
         </div>
       </div>
     </div>

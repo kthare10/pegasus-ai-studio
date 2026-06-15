@@ -12,13 +12,29 @@ export const metadata: Metadata = {
   description: "AI-powered scientific workflow development platform",
 };
 
+// Set the theme class before first paint to avoid a flash of the wrong theme.
+const noFlashTheme = `(function(){try{var t=JSON.parse(localStorage.getItem('studio-theme')||'{}').state?.theme||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap"
+          rel="stylesheet"
+        />
+        <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
+      </head>
       <body className="antialiased">
         <Providers>
           <UserMenu />
@@ -27,7 +43,7 @@ export default function RootLayout({
             <div className="flex flex-1 flex-col overflow-hidden">
               {/* Main content + optional chat sidebar */}
               <div className="flex flex-1 overflow-hidden">
-                <main className="flex-1 overflow-auto bg-gray-50">
+                <main className="flex-1 overflow-auto bg-base">
                   {children}
                 </main>
                 <GlobalChatPanel />
