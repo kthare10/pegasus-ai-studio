@@ -1,0 +1,36 @@
+# Shared-pool execute node for PegasusAI Studio — Approach B (M1).
+#
+# Runs a startd that reports to the shared central manager and runs jobs
+# matched from any user's submit-only schedd. Callbacks to pod-resident
+# schedds go through the central manager's CCB broker.
+
+CONDOR_HOST = cm
+COLLECTOR_HOST = $(CONDOR_HOST):9618
+
+# MUST match the central manager's TRUST_DOMAIN so this node selects the IDTOKEN
+# whose issuer matches when authenticating to the pool.
+TRUST_DOMAIN = pegasus-studio-pool
+
+DAEMON_LIST = MASTER, STARTD, SHARED_PORT
+USE_SHARED_PORT = TRUE
+
+# The startd may need to reach schedds that live in unroutable pods — broker
+# those connections through the central manager.
+CCB_ADDRESS = $(COLLECTOR_HOST)
+
+# Security: rely on the DEB default `use security:recommended` (config.d/00-security).
+# The startd's IDTOKEN (authz ADVERTISE_STARTD) is dropped in the default token
+# directory (/etc/condor/tokens.d) by up.sh. Do NOT re-set SEC_DEFAULT_* here.
+
+# Always accept jobs; no preemption in the prototype.
+START = TRUE
+SUSPEND = FALSE
+PREEMPT = FALSE
+KILL = FALSE
+WANT_VACATE = FALSE
+WANT_SUSPEND = FALSE
+
+# Advertise over TCP (shared-port pools don't carry the security session over UDP).
+UPDATE_COLLECTOR_WITH_TCP = TRUE
+
+UPDATE_INTERVAL = 60

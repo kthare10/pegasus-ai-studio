@@ -58,4 +58,27 @@ single exposed port. In personal mode a local pool comes up (`condor_status`).
 In submit mode the schedd starts and (once M1's central manager exists) will
 register with it — that end-to-end check is **M2**.
 
-## Next: M1 (shared Condor pool on K8s) and M2 (schedd-in-pod networking).
+## M1 — shared HTCondor pool (IN PROGRESS)
+
+Single-host loop on a Docker host (alpha-5) to nail the CCB/IDTOKEN config before
+porting to Kubernetes. `deploy/approach-b/condor/{central-manager,execute}.local`
++ `m1/up.sh` bring up a central manager (collector+negotiator+CCB+shared_port)
+and an execute node, both reusing the `:approach-b` image.
+
+Status: CM and execute containers start; the CM mints IDTOKENs (signed by a
+condor-owned pool key); shared_port + TCP collector updates configured. **Blocker:**
+the execute startd does not yet register — IDTOKENS auth fails because the
+client-side token selection resolves the server's issuer as *blank* ("Examining
+…/pool.token for valid tokens from issuer .") and drops IDTOKENS, falling back to
+FS/KERBEROS/SCITOKENS which all fail. TRUST_DOMAIN is set identically
+(`pegasus-studio-pool`) and the token's `iss` matches, so the remaining issue is
+how the client derives the *server's* trust domain pre-auth.
+
+Next options:
+1. Resolve the issuer derivation (HTCondor token bootstrap: daemon ad trust-domain
+   advertisement / `SEC_TOKEN_*` / known-hosts), keeping per-pod identity.
+2. For a faster networking-risk retire, use a shared **pool password** (PASSWORD
+   method) for M1/M2 to prove CCB + submit-from-pod end-to-end, then layer per-pod
+   IDTOKENS back in.
+
+## Next: M2 (submit-only schedd-in-pod end-to-end) once M1 auth is green.

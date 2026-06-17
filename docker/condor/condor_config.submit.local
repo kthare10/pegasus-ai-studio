@@ -16,6 +16,10 @@
 CONDOR_HOST = $ENV(STUDIO_CONDOR_HOST)
 COLLECTOR_HOST = $(CONDOR_HOST)
 
+# Must match the pool's TRUST_DOMAIN so the schedd selects the IDTOKEN whose
+# issuer matches when authenticating to the shared central manager.
+TRUST_DOMAIN = pegasus-studio-pool
+
 # --- Submit-only: no collector/negotiator/startd in the pod ---
 DAEMON_LIST = MASTER, SCHEDD, SHARED_PORT
 
@@ -27,11 +31,12 @@ SHARED_PORT_PORT = 9618
 #     execute nodes, so route shadow/starter callbacks through the collector. ---
 CCB_ADDRESS = $(COLLECTOR_HOST)
 
-# --- Authenticate to the pool with an IDTOKEN (not host-based trust) ---
-SEC_DEFAULT_AUTHENTICATION = REQUIRED
-SEC_DEFAULT_AUTHENTICATION_METHODS = IDTOKENS
-SEC_DEFAULT_INTEGRITY = REQUIRED
-SEC_DEFAULT_ENCRYPTION = REQUIRED
+# --- Authenticate to the pool with an IDTOKEN ---
+# Rely on the DEB default `use security:recommended` (config.d/00-security) for
+# the SEC_DEFAULT_* policy; only point the token directory at the PVC so the
+# pool IDTOKEN persists across pod restarts. Do NOT re-set SEC_DEFAULT_* here —
+# partially overriding the template breaks the auth handshake ("Unable to
+# reconcile").
 SEC_TOKEN_DIRECTORY = $ENV(HOME)/.condor/tokens.d
 
 # --- Persist all schedd state on the per-user PVC (mounted at $HOME) so
