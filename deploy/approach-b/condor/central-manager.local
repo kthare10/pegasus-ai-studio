@@ -28,6 +28,13 @@ SHARED_PORT_PORT = 9618
 # the template partially causes "DC_AUTHENTICATE: Unable to reconcile".
 SEC_TOKEN_POOL_SIGNING_KEY_FILE = /etc/condor/passwords.d/POOL
 
+# Prototype auth: add PASSWORD (a shared pool secret distributed to every node)
+# to the template's method list. This proves the shared pool + CCB end-to-end
+# without the per-pod IDTOKENS issuer-bootstrap. We APPEND rather than replace,
+# so the template's local/family sessions keep working. Per-pod IDTOKENS (for
+# per-user pool identity) is layered back in after the networking risk is retired.
+SEC_DEFAULT_AUTHENTICATION_METHODS = FS, PASSWORD, IDTOKENS, KERBEROS, SCITOKENS, SSL
+
 # Authenticated daemons may advertise/read/write. Tighten per-identity later.
 ALLOW_ADVERTISE_MASTER = *
 ALLOW_ADVERTISE_STARTD = *

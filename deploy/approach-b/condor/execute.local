@@ -20,7 +20,11 @@ CCB_ADDRESS = $(COLLECTOR_HOST)
 
 # Security: rely on the DEB default `use security:recommended` (config.d/00-security).
 # The startd's IDTOKEN (authz ADVERTISE_STARTD) is dropped in the default token
-# directory (/etc/condor/tokens.d) by up.sh. Do NOT re-set SEC_DEFAULT_* here.
+# directory (/etc/condor/tokens.d) by up.sh.
+#
+# Prototype auth: add PASSWORD (shared pool secret, same /etc/condor/passwords.d/POOL
+# as the CM) to the template's method list. APPEND, don't replace.
+SEC_DEFAULT_AUTHENTICATION_METHODS = FS, PASSWORD, IDTOKENS, KERBEROS, SCITOKENS, SSL
 
 # Always accept jobs; no preemption in the prototype.
 START = TRUE

@@ -62,17 +62,30 @@ docker exec cm runuser -u condor -- condor_token_create -identity submit@pool \
     -authz ADVERTISE_SCHEDD -authz READ -authz WRITE -authz DAEMON > "${TOKENS}/submit.token"
 echo "[m1] tokens written to ${TOKENS}/ (submit.token is for M2)"
 
+# --- Pool password (shared secret) for the prototype PASSWORD auth ----------
+# Every node needs the identical /etc/condor/passwords.d/POOL. Copy the CM's.
+echo "[m1] exporting shared pool secret for PASSWORD auth..."
+docker cp cm:/etc/condor/passwords.d/POOL "${TOKENS}/POOL" >/dev/null
+
 # --- Execute node ------------------------------------------------------------
 echo "[m1] starting execute node..."
 docker run -d --name execute --hostname execute --network "${NET}" \
   -v "${CONF}/execute.local:/etc/condor/condor_config.local:ro" \
   -v "${TOKENS}/execute.token:/tmp/pool.token:ro" \
+  -v "${TOKENS}/POOL:/tmp/POOL:ro" \
   --entrypoint /bin/bash "${IMAGE}" -c '
     set -e
+    # IDTOKEN (for later) in the system token dir
     mkdir -p /etc/condor/tokens.d
     cp /tmp/pool.token /etc/condor/tokens.d/pool.token
     chown condor:condor /etc/condor/tokens.d/pool.token
     chmod 600 /etc/condor/tokens.d/pool.token
+    # Shared pool secret for PASSWORD auth — identical bytes to the CM.
+    mkdir -p /etc/condor/passwords.d
+    cp /tmp/POOL /etc/condor/passwords.d/POOL
+    chown -R condor:condor /etc/condor/passwords.d
+    chmod 700 /etc/condor/passwords.d
+    chmod 600 /etc/condor/passwords.d/POOL
     exec /usr/sbin/condor_master -f
   ' >/dev/null
 
