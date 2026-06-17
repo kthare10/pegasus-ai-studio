@@ -188,8 +188,7 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
   return (
     <div className="border-t border-line bg-surface p-4">
       <div className="mx-auto max-w-3xl space-y-2">
-        {/* Provider / Model selectors (hidden in compact/embedded mode) */}
-        {!compact && (
+        {/* Provider / Model selectors — shown in both full and compact (embedded) modes */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <label className="text-fgmuted">Provider:</label>
           <select
@@ -201,7 +200,7 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
               const p = providers.find((p) => p.id === pid);
               if (p) setChatModel(p.default_model);
             }}
-            className="rounded border border-line px-2 py-1 text-xs text-fg focus:border-pegasus-500 focus:ring-pegasus-500"
+            className="min-w-0 rounded border border-line px-2 py-1 text-xs text-fg focus:border-pegasus-500 focus:ring-pegasus-500"
           >
             <option value="">Default</option>
             {providers.map((p) => (
@@ -217,10 +216,9 @@ export function ChatInput({ compact = false }: { compact?: boolean }) {
             value={chatModel || ""}
             onChange={(e) => setChatModel(e.target.value || null)}
             placeholder="default"
-            className="w-48 rounded border border-line px-2 py-1 text-xs text-fg focus:border-pegasus-500 focus:ring-pegasus-500"
+            className={`${compact ? "min-w-[8rem] flex-1" : "w-48"} min-w-0 rounded border border-line px-2 py-1 text-xs text-fg focus:border-pegasus-500 focus:ring-pegasus-500`}
           />
         </div>
-        )}
 
         {/* Input area */}
         <div className="flex items-end gap-2">
