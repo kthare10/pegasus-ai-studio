@@ -170,12 +170,20 @@ RUN curl -fsSL "https://github.com/apptainer/apptainer/releases/download/v${APPT
     # symlink so it picks up apptainer regardless of which name it looks for.
     { command -v singularity >/dev/null 2>&1 || ln -sf /usr/bin/apptainer /usr/bin/singularity; }
 
-# ---- Personal HTCondor configuration ----
+# ---- HTCondor configuration (two modes, selected at runtime) ----
 # The DEB install provides /etc/condor/condor_config, which loads
-# /etc/condor/condor_config.local — drop our personal-pool config in there.
+# /etc/condor/condor_config.local. We ship BOTH a personal-pool config
+# (Approach A: everything in one container) and a submit-only config
+# (Approach B: schedd reports to a shared central manager via CCB). The
+# `condor` s6 service activates one based on STUDIO_CONDOR_MODE at startup.
+# Default is the personal pool, so the existing Approach-A image is unchanged.
 RUN mkdir -p /etc/condor
-COPY docker/condor/condor_config.local /etc/condor/condor_config.local
+COPY docker/condor/condor_config.local /etc/condor/condor_config.personal.local
+COPY docker/condor/condor_config.submit.local /etc/condor/condor_config.submit.local
+RUN cp /etc/condor/condor_config.personal.local /etc/condor/condor_config.local
 ENV CONDOR_CONFIG=/etc/condor/condor_config
+# personal | submit  (submit also needs STUDIO_CONDOR_HOST + a pool IDTOKEN)
+ENV STUDIO_CONDOR_MODE=personal
 
 # ---- workflow-monitor ----
 # The studio drives all workflow status/job/stats views from the JSONL event

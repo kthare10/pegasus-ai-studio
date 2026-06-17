@@ -1,0 +1,48 @@
+# Submit-only HTCondor configuration for PegasusAI Studio — Approach B pod.
+#
+# Unlike the personal pool (condor_config.local), this pod runs ONLY a schedd
+# that reports to a SHARED central manager. Job execution happens on the shared
+# pool's execute nodes, not in this pod. Pod IPs are ephemeral and not routable
+# from execute nodes, so shadow/starter callbacks are brokered through the
+# collector's CCB. The schedd authenticates to the pool with an IDTOKEN issued
+# at pod spawn.
+#
+# Required env (provided by the spawner / `docker run -e`):
+#   STUDIO_CONDOR_HOST   host:port (or DNS name) of the shared central manager
+#   HOME                 per-user PVC mount (spool/submit state persist here)
+# Token: drop the pool IDTOKEN at $HOME/.condor/tokens.d/ before start.
+
+# --- Pool identity (shared central manager) ---
+CONDOR_HOST = $ENV(STUDIO_CONDOR_HOST)
+COLLECTOR_HOST = $(CONDOR_HOST)
+
+# --- Submit-only: no collector/negotiator/startd in the pod ---
+DAEMON_LIST = MASTER, SCHEDD, SHARED_PORT
+
+# --- One shared TCP port so the pod exposes exactly one Condor port ---
+USE_SHARED_PORT = TRUE
+SHARED_PORT_PORT = 9618
+
+# --- Connection brokering: the pod's schedd is not directly reachable from
+#     execute nodes, so route shadow/starter callbacks through the collector. ---
+CCB_ADDRESS = $(COLLECTOR_HOST)
+
+# --- Authenticate to the pool with an IDTOKEN (not host-based trust) ---
+SEC_DEFAULT_AUTHENTICATION = REQUIRED
+SEC_DEFAULT_AUTHENTICATION_METHODS = IDTOKENS
+SEC_DEFAULT_INTEGRITY = REQUIRED
+SEC_DEFAULT_ENCRYPTION = REQUIRED
+SEC_TOKEN_DIRECTORY = $ENV(HOME)/.condor/tokens.d
+
+# --- Persist all schedd state on the per-user PVC (mounted at $HOME) so
+#     queued jobs and DAGMan survive a pod restart (recovery from the spool). ---
+LOCAL_DIR = $ENV(HOME)/.condor
+LOG = $(LOCAL_DIR)/log
+LOCK = $(LOCAL_DIR)/lock
+RUN = $(LOCAL_DIR)/run
+SPOOL = $(LOCAL_DIR)/spool
+CRED_STORE_DIR = $(LOCAL_DIR)/cred
+# No EXECUTE dir — this pod never runs jobs locally.
+
+# --- Keep the schedd talking to the collector promptly ---
+UPDATE_INTERVAL = 60

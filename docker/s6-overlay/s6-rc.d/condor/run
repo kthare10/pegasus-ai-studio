@@ -1,17 +1,58 @@
 #!/command/with-contenv bash
-# Personal HTCondor daemon — runs as root
+# HTCondor daemon for PegasusAI Studio — runs as root (DEB install drops to the
+# 'condor' user for daemon file I/O).
+#
+# Two modes, selected by STUDIO_CONDOR_MODE:
+#   personal (default) — full pool in one container (Approach A). State in /tmp.
+#   submit             — submit-only schedd reporting to a shared central
+#                        manager via CCB (Approach B). State on the PVC ($HOME).
 
-# Create runtime directories
-mkdir -p /tmp/condor/{log,lock,run,spool,execute,cred}
-chmod 755 /tmp/condor/execute
-chmod 700 /tmp/condor/cred
+MODE="${STUDIO_CONDOR_MODE:-personal}"
+PEGASUS_HOME="${HOME:-/home/pegasus}"
 
-# The DEB HTCondor install drops privilege to the 'condor' user for daemon
-# file I/O, so the runtime dirs (LOG/LOCK/RUN/SPOOL/...) must be writable by
-# that user — otherwise condor_master dies with "Cannot open log file".
-# Harmless on the conda/arm64 path where no 'condor' user exists.
-if id condor >/dev/null 2>&1; then
-    chown -R condor:condor /tmp/condor
+if [ "$MODE" = "submit" ]; then
+    echo "[condor] mode=submit — schedd reports to shared pool ${STUDIO_CONDOR_HOST:-<unset>}"
+
+    if [ -z "${STUDIO_CONDOR_HOST:-}" ]; then
+        echo "[condor] ERROR: STUDIO_CONDOR_MODE=submit but STUDIO_CONDOR_HOST is unset." >&2
+        echo "[condor] (set it to the shared central manager's host:port)" >&2
+        exec sleep infinity
+    fi
+
+    # Activate the submit-only config for this boot.
+    cp /etc/condor/condor_config.submit.local /etc/condor/condor_config.local
+
+    # State persists on the per-user PVC mounted at $HOME so queued jobs and
+    # DAGMan survive a pod restart (recovery from the spool — see M4).
+    CONDOR_LOCAL="${PEGASUS_HOME}/.condor"
+    mkdir -p "${CONDOR_LOCAL}"/{log,lock,run,spool,cred,tokens.d}
+    chmod 700 "${CONDOR_LOCAL}/cred" "${CONDOR_LOCAL}/tokens.d"
+    # The schedd drops to the 'condor' user for daemon I/O, so it must own the
+    # state dirs. Tokens are read as the connecting identity; keep them readable.
+    if id condor >/dev/null 2>&1; then
+        chown -R condor:condor "${CONDOR_LOCAL}"
+    fi
+
+    if ! ls "${CONDOR_LOCAL}/tokens.d/"* >/dev/null 2>&1; then
+        echo "[condor] WARNING: no IDTOKEN in ${CONDOR_LOCAL}/tokens.d/ — the" >&2
+        echo "[condor]          schedd will fail to authenticate to the pool." >&2
+        echo "[condor]          Issue one at spawn: condor_token_create ... > tokens.d/pool.token" >&2
+    fi
+else
+    echo "[condor] mode=personal — single-node pool in this container"
+    # Restore the personal config in case a previous boot activated submit mode.
+    cp /etc/condor/condor_config.personal.local /etc/condor/condor_config.local
+
+    # Create runtime directories (ephemeral /tmp is fine for a personal pool).
+    mkdir -p /tmp/condor/{log,lock,run,spool,execute,cred}
+    chmod 755 /tmp/condor/execute
+    chmod 700 /tmp/condor/cred
+    # The DEB HTCondor install drops privilege to the 'condor' user for daemon
+    # file I/O, so the runtime dirs must be writable by that user — otherwise
+    # condor_master dies with "Cannot open log file".
+    if id condor >/dev/null 2>&1; then
+        chown -R condor:condor /tmp/condor
+    fi
 fi
 
 # Find condor_master (DEB install)
@@ -26,5 +67,5 @@ fi
 # DEB install provides the system config
 export CONDOR_CONFIG=/etc/condor/condor_config
 
-echo "[condor] Starting personal HTCondor pool..."
+echo "[condor] Starting HTCondor (mode=${MODE})..."
 exec "$CONDOR_MASTER" -f
