@@ -95,4 +95,14 @@ Most promising next steps (need an HTCondor reference, not more trial-and-error)
 The CCB/shared-port/TCP-update wiring is done and carries over; only the
 credential-security bootstrap remains for M1 to go green.
 
+### Recommended path: the FABRIC kit (`fabric/`)
+
+The container-only loop above hit an HTCondor credential-security wall because a
+bare `condor_master -f` runs the daemons as `condor` (no root priv-switch). The
+turnkey **`deploy/approach-b/fabric/`** kit stands the pool up on a dedicated
+FABRIC slice with HTCondor installed via **systemd** (master runs as root →
+credentials read normally, so the `read_secure_file` blocker does not occur). It
+also provides the k3s control plane for the per-user-pod milestones. See
+`fabric/README.md` — that is the intended way to take M1→M6 forward.
+
 ## Next: M2 (submit-only schedd-in-pod end-to-end) once M1 auth is green.

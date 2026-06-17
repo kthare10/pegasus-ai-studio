@@ -1,0 +1,29 @@
+# PegasusAI Studio Approach-B — HTCondor execute node (config.d drop-in).
+# Installed by provision-exec.sh as /etc/condor/config.d/50-execute.conf with
+# @CONDOR_HOST@ replaced by the central manager's pool-network IP.
+
+CONDOR_HOST = @CONDOR_HOST@
+COLLECTOR_HOST = $(CONDOR_HOST):9618
+
+# MUST match the CM's TRUST_DOMAIN so the startd selects the right IDTOKEN.
+TRUST_DOMAIN = pegasus-studio-pool
+
+DAEMON_LIST = MASTER, STARTD, SHARED_PORT
+USE_SHARED_PORT = TRUE
+
+# Callbacks to pod-resident schedds go through the central manager's CCB broker.
+CCB_ADDRESS = $(COLLECTOR_HOST)
+UPDATE_COLLECTOR_WITH_TCP = TRUE
+
+# The startd's IDTOKEN (authz ADVERTISE_STARTD) is installed at
+# /etc/condor/tokens.d/pool.token (root-owned 600) by provision-exec.sh.
+
+# Always accept jobs; no preemption in the prototype.
+START = TRUE
+SUSPEND = FALSE
+PREEMPT = FALSE
+KILL = FALSE
+WANT_VACATE = FALSE
+WANT_SUSPEND = FALSE
+
+UPDATE_INTERVAL = 60
